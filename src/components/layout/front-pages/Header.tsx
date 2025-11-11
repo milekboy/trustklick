@@ -69,26 +69,37 @@ const Header = ({ mode }: { mode: Mode }) => {
           <div className='flex items-center gap-2 sm:gap-4'>
             <ModeDropdown />
             {isBelowLgScreen ? (
-              <CustomIconButton
-                component={Link}
-                variant='contained'
-                href='https://1.envato.market/materialize_admin'
-                color='primary'
-                target='_blank'
-              >
-                <i className='ri-shopping-cart-line text-xl' />
-              </CustomIconButton>
+              // <CustomIconButton
+              //   component={Link}
+              //   variant='contained'
+              //   href='https://1.envato.market/materialize_admin'
+              //   color='primary'
+              //   target='_blank'
+              // >
+              //   <i className='ri-shopping-cart-line text-xl' />
+              // </CustomIconButton>
+              <></>
             ) : (
-              <Button
-                component={Link}
-                variant='contained'
-                href='https://1.envato.market/materialize_admin'
-                startIcon={<i className='ri-shopping-cart-line text-xl' />}
-                className='whitespace-nowrap'
-                target='_blank'
-              >
-                Purchase Now
-              </Button>
+              <>
+                <Button
+                  component={Link}
+                  variant='contained'
+                  href='/pages/auth/login-v2'
+                  className='whitespace-nowrap'
+                  target='_blank'
+                >
+                  Login
+                </Button>
+                <Button
+                  component={Link}
+                  variant='contained'
+                  href='/pages/auth/register-v1'
+                  className='whitespace-nowrap'
+                  target='_blank'
+                >
+                  Register
+                </Button>
+              </>
             )}
           </div>
         </div>

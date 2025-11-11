@@ -143,21 +143,38 @@ const FrontMenu = (props: Props) => {
       >
         Contact us
       </Typography>
-      <DropdownMenu
-        mode={mode}
-        isBelowLgScreen={isBelowLgScreen}
-        isDrawerOpen={isDrawerOpen}
-        setIsDrawerOpen={setIsDrawerOpen}
-      />
-      <Typography
-        color='text.primary'
-        component={Link}
-        href='/dashboards/crm'
-        target='_blank'
-        className='font-medium plb-3 pli-1.5 hover:text-primary'
-      >
-        Admin
-      </Typography>
+      {isBelowLgScreen ? (
+        <>
+          <Typography
+            color='text.primary'
+            component={Link}
+            href='/pages/auth/login-v2'
+            className={classnames('font-medium plb-3 pli-1.5 hover:text-primary', {
+              'text-primary': intersections['contact-us']
+            })}
+          >
+            Login
+          </Typography>
+          <Typography
+            color='text.primary'
+            component={Link}
+            href='/pages/auth/register-v1'
+            className={classnames('font-medium plb-3 pli-1.5 hover:text-primary', {
+              'text-primary': intersections['contact-us']
+            })}
+          >
+            Register
+          </Typography>
+        </>
+      ) : (
+        // <DropdownMenu
+        //   mode={mode}
+        //   isBelowLgScreen={isBelowLgScreen}
+        //   isDrawerOpen={isDrawerOpen}
+        //   setIsDrawerOpen={setIsDrawerOpen}
+        // />
+        <></>
+      )}
     </Wrapper>
   )
 }

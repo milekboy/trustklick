@@ -79,7 +79,7 @@ const LoginV2 = ({ mode }: { mode: Mode }) => {
         message: data.message || 'Login successful!',
         type: 'success'
       })
-      router.push('/front-pages/landing-page')
+      router.push('/dashboards/crm')
     } catch (err) {
       const error = err as any
       console.log(error.response?.data)
