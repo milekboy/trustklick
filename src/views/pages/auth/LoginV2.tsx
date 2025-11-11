@@ -1,13 +1,10 @@
 'use client'
 
-// React Imports
 import { useState } from 'react'
 
-// Next Imports
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 
-// MUI Imports
 import Typography from '@mui/material/Typography'
 import TextField from '@mui/material/TextField'
 import IconButton from '@mui/material/IconButton'
@@ -17,29 +14,24 @@ import Button from '@mui/material/Button'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Divider from '@mui/material/Divider'
 
-// Third-party Imports
+import { useAuth } from '@components/AuthContext'
 import classnames from 'classnames'
 
-// Type Imports
 import type { Mode } from '@core/types'
 import type { Locale } from '@configs/i18n'
 
-// Component Imports
 import Logo from '@components/layout/shared/Logo'
 
-// Config Imports
 import themeConfig from '@configs/themeConfig'
 
-// Hook Imports
 import { useImageVariant } from '@core/hooks/useImageVariant'
 import { useSettings } from '@core/hooks/useSettings'
-
-// Util Imports
+import Toast from '@/components/Toast'
 import { getLocalizedUrl } from '@/utils/i18n'
+import NetworkInstance from '@/components/NetworkInstance'
 
 const LoginV2 = ({ mode }: { mode: Mode }) => {
   // States
-  const [isPasswordShown, setIsPasswordShown] = useState(false)
 
   // Vars
   const darkImg = '/images/pages/auth-v2-mask-1-dark.png'
@@ -53,7 +45,9 @@ const LoginV2 = ({ mode }: { mode: Mode }) => {
   const { lang: locale } = useParams()
   const { settings } = useSettings()
   const authBackground = useImageVariant(mode, lightImg, darkImg)
-
+  const { login } = useAuth()
+  const api = NetworkInstance()
+  const router = useRouter()
   const characterIllustration = useImageVariant(
     mode,
     lightIllustration,
@@ -62,10 +56,42 @@ const LoginV2 = ({ mode }: { mode: Mode }) => {
     borderedDarkIllustration
   )
 
-  const handleClickShowPassword = () => setIsPasswordShown(show => !show)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isPasswordShown, setIsPasswordShown] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [toast, setToast] = useState<any>(null)
+  const handleClickShowPassword = () => setIsPasswordShown(!isPasswordShown)
 
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      console.log('Login payload:', { email, password })
+
+      const { data } = await api.post('/api/login', { email, password })
+
+      login({ user: data.user, token: data.token })
+      console.log(data)
+      setToast({
+        message: data.message || 'Login successful!',
+        type: 'success'
+      })
+      router.push('/front-pages/landing-page')
+    } catch (err) {
+      const error = err as any
+      console.log(error.response?.data)
+      setToast({
+        message: error.response?.data?.message || 'Invalid credentials. Please try again.',
+        type: 'error'
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
   return (
     <div className='flex bs-full justify-center'>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       <div
         className={classnames(
           'flex bs-full items-center justify-center flex-1 min-bs-[100dvh] relative p-6 max-md:hidden',
@@ -95,11 +121,19 @@ const LoginV2 = ({ mode }: { mode: Mode }) => {
             <Typography variant='h4'>{`Welcome to ${themeConfig.templateName}! 👋🏻`}</Typography>
             <Typography className='mbs-1'>Please sign-in to your account and start the adventure</Typography>
           </div>
-          <form noValidate autoComplete='off' onSubmit={e => e.preventDefault()} className='flex flex-col gap-5'>
-            <TextField autoFocus fullWidth label='Email' />
+          <form noValidate autoComplete='off' onSubmit={handleSubmit} className='flex flex-col gap-5'>
+            <TextField
+              autoFocus
+              fullWidth
+              label='Email'
+              value={email} // ✅ bind state
+              onChange={e => setEmail(e.target.value)}
+            />
             <TextField
               fullWidth
               label='Password'
+              value={password} // ✅ bind state
+              onChange={e => setPassword(e.target.value)} // ✅ update state
               type={isPasswordShown ? 'text' : 'password'}
               slotProps={{
                 input: {
@@ -136,7 +170,7 @@ const LoginV2 = ({ mode }: { mode: Mode }) => {
               <Typography>New on our platform?</Typography>
               <Typography
                 component={Link}
-                href={getLocalizedUrl('/pages/auth/register-v2', locale as Locale)}
+                href={getLocalizedUrl('/pages/auth/register-v1', locale as Locale)}
                 color='primary.main'
               >
                 Create an account
