@@ -51,7 +51,7 @@ const RegisterV1 = ({ mode }: { mode: Mode }) => {
     }
     setLoading(true)
     try {
-      const { data } = await api.post('/api/register', {
+      const { data } = await api.post('/register', {
         first_name: firstName,
         last_name: lastName,
         phone,
@@ -83,13 +83,13 @@ const RegisterV1 = ({ mode }: { mode: Mode }) => {
 
           <form noValidate autoComplete='off' onSubmit={handleSubmit} className='flex flex-col gap-5 mt-5'>
             {/* Row 1: First Name | Last Name */}
-            <div className='flex gap-4'>
+            <div className='flex flex-col sm:flex-row gap-4'>
               <TextField fullWidth label='First Name' value={firstName} onChange={e => setFirstName(e.target.value)} />
               <TextField fullWidth label='Last Name' value={lastName} onChange={e => setLastName(e.target.value)} />
             </div>
 
             {/* Row 2: Phone Number | Email */}
-            <div className='flex gap-4'>
+            <div className='flex flex-col sm:flex-row gap-4'>
               <TextField
                 fullWidth
                 type='tel'
@@ -101,7 +101,7 @@ const RegisterV1 = ({ mode }: { mode: Mode }) => {
             </div>
 
             {/* Row 3: Create Password | Confirm Password */}
-            <div className='flex gap-4'>
+            <div className='flex flex-col sm:flex-row gap-4'>
               <TextField
                 fullWidth
                 label='Create Password'

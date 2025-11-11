@@ -63,13 +63,15 @@ const LoginV2 = ({ mode }: { mode: Mode }) => {
   const [toast, setToast] = useState<any>(null)
   const handleClickShowPassword = () => setIsPasswordShown(!isPasswordShown)
 
+  // handleSubmit
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault()
     setLoading(true)
     try {
       console.log('Login payload:', { email, password })
 
-      const { data } = await api.post('/api/login', { email, password })
+      // Remove the leading /api here
+      const { data } = await api.post('/login', { email, password })
 
       login({ user: data.user, token: data.token })
       console.log(data)
@@ -89,6 +91,7 @@ const LoginV2 = ({ mode }: { mode: Mode }) => {
       setLoading(false)
     }
   }
+
   return (
     <div className='flex bs-full justify-center'>
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
