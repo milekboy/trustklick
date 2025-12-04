@@ -24,7 +24,7 @@ export default function Toast({ message, type = 'info', onClose }) {
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 50 }}
-      className={`fixed top-5 right-5 border px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2 ${toastStyles[type]}`}
+      className={`fixed top-5 right-5 border px-4 py-3 rounded-lg shadow-lg z-header flex items-center gap-2 ${toastStyles[type]}`}
     >
       <span>
         {type === 'success' && '✅'}

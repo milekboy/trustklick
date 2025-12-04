@@ -3,16 +3,33 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import NetworkInstance from './NetworkInstance'
 
-const AuthContext = createContext({
+type AuthUser = {
+  first_name?: string
+  last_name?: string
+  email?: string
+  image?: string
+  [key: string]: any
+}
+
+type AuthContextType = {
+  user: AuthUser | null
+  token: string | null
+  login: (data: { user: AuthUser; token: string }) => void
+  logout: () => void
+  setUser: (user: AuthUser | null) => void
+}
+
+const AuthContext = createContext<AuthContextType>({
   user: null,
   token: null,
-  login: async p0 => {},
-  logout: () => {}
+  login: () => {},
+  logout: () => {},
+  setUser: () => {}
 })
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [token, setToken] = useState(null)
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<AuthUser | null>(null)
+  const [token, setToken] = useState<string | null>(null)
   const networkInstance = NetworkInstance()
 
   useEffect(() => {
@@ -39,12 +56,10 @@ export function AuthProvider({ children }) {
 
     const fetchUser = async () => {
       try {
-        console.log('fetching')
-        const res = await networkInstance.get('/api/user', {
+        const res = await networkInstance.get('/user', {
           headers: { Authorization: `Bearer ${token}` }
         })
-        console.log(res)
-        setUser(res.data)
+        setUser(res.data.user ?? res.data) // handles both formats
       } catch (error) {
         console.error('Error fetching user:', error)
         setUser(null)
@@ -54,7 +69,7 @@ export function AuthProvider({ children }) {
     fetchUser()
   }, [token])
 
-  const login = ({ user: u, token: t }) => {
+  const login = ({ user: u, token: t }: { user: AuthUser; token: string }) => {
     setUser(u)
     setToken(t)
   }

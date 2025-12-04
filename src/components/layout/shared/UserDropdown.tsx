@@ -20,7 +20,7 @@ import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 import MenuItem from '@mui/material/MenuItem'
 import Button from '@mui/material/Button'
-
+import { useAuth } from '@/components/AuthContext'
 // Third-party Imports
 import { signOut, useSession } from 'next-auth/react'
 
@@ -44,7 +44,7 @@ const BadgeContentSpan = styled('span')({
 })
 
 const UserDropdown = () => {
-  // States
+  const { user, token } = useAuth()
   const [open, setOpen] = useState(false)
 
   // Refs
@@ -134,20 +134,19 @@ const UserDropdown = () => {
                   <Divider className='mlb-1' />
                   <MenuItem className='gap-3 pli-4' onClick={e => handleDropdownClose(e, '/pages/user-profile')}>
                     <i className='ri-user-3-line' />
-                    <Typography color='text.primary'>My Profile</Typography>
+                    <Typography color='text.primary'>
+                      {`${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Profile'}
+                    </Typography>
                   </MenuItem>
                   <MenuItem className='gap-3 pli-4' onClick={e => handleDropdownClose(e, '/pages/account-settings')}>
-                    <i className='ri-settings-4-line' />
-                    <Typography color='text.primary'>Settings</Typography>
+                    <i className='ri-mail-line' />
+                    <Typography color='text.primary'>{user?.email || ''}</Typography>
                   </MenuItem>
                   <MenuItem className='gap-3 pli-4' onClick={e => handleDropdownClose(e, '/pages/pricing')}>
-                    <i className='ri-money-dollar-circle-line' />
-                    <Typography color='text.primary'>Pricing</Typography>
+                    <i className='ri-phone-line' />
+                    <Typography color='text.primary'>{user?.phone || ''}</Typography>
                   </MenuItem>
-                  <MenuItem className='gap-3 pli-4' onClick={e => handleDropdownClose(e, '/pages/faq')}>
-                    <i className='ri-question-line' />
-                    <Typography color='text.primary'>FAQ</Typography>
-                  </MenuItem>
+
                   <div className='flex items-center plb-1.5 pli-4'>
                     <Button
                       fullWidth

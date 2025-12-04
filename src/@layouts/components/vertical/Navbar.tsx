@@ -68,7 +68,7 @@ const Navbar = (props: Props) => {
         scrolled: trigger
       })}
     >
-      <div className={classnames(verticalLayoutClasses.navbar, 'flex bs-full')}>{children}</div>
+      <div className={classnames(verticalLayoutClasses.navbar, 'bs-full ')}>{children}</div>
     </StyledHeader>
   )
 }

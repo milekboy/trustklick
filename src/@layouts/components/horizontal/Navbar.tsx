@@ -9,7 +9,7 @@ import { horizontalLayoutClasses } from '@layouts/utils/layoutClasses'
 
 const Navbar = ({ children }: ChildrenType) => {
   return (
-    <div className={classnames(horizontalLayoutClasses.navbar, 'flex items-center justify-between is-full')}>
+    <div className={classnames(horizontalLayoutClasses.navbar, 'flex items-center hiddenjustify-between is-full')}>
       {children}
     </div>
   )

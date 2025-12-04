@@ -97,7 +97,7 @@ const ShortcutsDropdown = ({ shortcuts }: { shortcuts: ShortcutsType[] }) => {
   return (
     <>
       <IconButton ref={anchorRef} onClick={handleToggle} className='text-textPrimary'>
-        <i className='ri-star-smile-line' />
+        <i className='ri-sticky-note-add-line' />
       </IconButton>
       <Popper
         open={open}
@@ -127,26 +127,8 @@ const ShortcutsDropdown = ({ shortcuts }: { shortcuts: ShortcutsType[] }) => {
                 <div className='bs-full flex flex-col'>
                   <div className='flex items-center justify-between plb-3 pli-4 is-full gap-2'>
                     <Typography variant='h6' className='flex-auto'>
-                      Shortcuts
+                      Klick Actions
                     </Typography>
-                    <Tooltip
-                      title='Add Shortcut'
-                      placement={placement === 'bottom-end' ? 'left' : 'right'}
-                      slotProps={{
-                        popper: {
-                          sx: {
-                            '& .MuiTooltip-tooltip': {
-                              transformOrigin:
-                                placement === 'bottom-end' ? 'right center !important' : 'right center !important'
-                            }
-                          }
-                        }
-                      }}
-                    >
-                      <IconButton size='small' className='text-textPrimary'>
-                        <i className='ri-add-line text-xl' />
-                      </IconButton>
-                    </Tooltip>
                   </div>
                   <Divider />
                   <ScrollWrapper hidden={hidden}>

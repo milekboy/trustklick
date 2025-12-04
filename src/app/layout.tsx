@@ -25,6 +25,7 @@ import '@/app/globals.css'
 
 // Generated Icon CSS Imports
 import '@assets/iconify-icons/generated-icons.css'
+import { AuthProvider } from '@/components/AuthContext'
 
 export const metadata = {
   title: 'TrustKlick',
@@ -48,10 +49,12 @@ const RootLayout = async (
   return (
     <html id='__next' lang={lang} dir={direction} suppressHydrationWarning>
       <body className='flex is-full min-bs-full flex-auto flex-col'>
-        <InitColorSchemeScript attribute='data' defaultMode={systemMode} />
-        <TranslationWrapper headersList={headersList} lang={lang}>
-          {children}
-        </TranslationWrapper>
+        <AuthProvider>
+          <InitColorSchemeScript attribute='data' defaultMode={systemMode} />
+          <TranslationWrapper headersList={headersList} lang={lang}>
+            {children}
+          </TranslationWrapper>
+        </AuthProvider>
       </body>
     </html>
   )

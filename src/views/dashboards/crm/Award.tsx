@@ -19,20 +19,18 @@ const Award = () => {
       <CardContent>
         <div className='flex flex-col items-start gap-2.5'>
           <div className='flex flex-col'>
-            <Typography variant='h5'>
-              Congratulations <span className='font-bold'>Norris!</span> 🎉
-            </Typography>
-            <Typography variant='subtitle1'>Best seller of the month</Typography>
+            <Typography variant='subtitle1'>Wallet balance</Typography>
+            <Typography variant='h5'>₦3000.34</Typography>
           </div>
-          <div className='flex flex-col'>
-            <Typography variant='h5' color='primary.main'>
-              $42.8k
-            </Typography>
-            <Typography>78% of target 🚀</Typography>
+          <div className='lg:flex gap-5 mt-16'>
+            {' '}
+            <Button size='small' variant='contained' color='success'>
+              Withdraw
+            </Button>
+            <Button size='small' variant='contained'>
+              Fund Wallet
+            </Button>
           </div>
-          <Button size='small' variant='contained'>
-            View Sales
-          </Button>
         </div>
         <img
           src='/images/cards/trophy.png'

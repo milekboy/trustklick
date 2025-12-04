@@ -16,7 +16,7 @@ import ExternalLinks from '@views/dashboards/crm/ExternalLinks'
 import PaymentHistory from '@views/dashboards/crm/PaymentHistory'
 import SalesInCountries from '@views/dashboards/crm/SalesInCountries'
 import UserTable from '@views/dashboards/crm/UserTable'
-
+import KlickList from '@views/dashboards/crm/UserTable'
 // Server Action Imports
 import { getServerMode } from '@core/utils/serverHelpers'
 
@@ -51,11 +51,11 @@ const DashboardCRM = async () => {
       <Grid size={{ xs: 12, md: 4 }}>
         <Award />
       </Grid>
-      <Grid size={{ xs: 12, md: 2, sm: 3 }}>
+      <Grid size={{ xs: 12, md: 4, sm: 3 }}>
         <CardStatVertical
-          stats='155k'
-          title='Total Orders'
-          trendNumber='22%'
+          stats='15'
+          title='Total Klicks'
+          trendNumber='2'
           chipText='Last 4 Month'
           avatarColor='primary'
           avatarIcon='ri-shopping-cart-line'
@@ -63,30 +63,19 @@ const DashboardCRM = async () => {
           chipColor='secondary'
         />
       </Grid>
-      <Grid size={{ xs: 12, sm: 3, md: 2 }}>
-        <CardStatVertical
-          stats='$13.4k'
-          title='Total Sales'
-          trendNumber='38%'
-          chipText='Last Six Months'
-          avatarColor='success'
-          avatarIcon='ri-handbag-line'
-          avatarSkin='light'
-          chipColor='secondary'
-        />
-      </Grid>
-      <Grid size={{ xs: 12, sm: 3, md: 2 }}>
-        <StackedBarChart />
-      </Grid>
-      <Grid size={{ xs: 12, sm: 3, md: 2 }}>
+
+      <Grid size={{ xs: 12, sm: 4, md: 4 }}>
         <DonutChart />
       </Grid>
-      <Grid size={{ xs: 12, md: 4 }}>
+      <Grid size={{ xs: 12, md: 12 }}>
+        <KlickList />
+      </Grid>
+      {/* <Grid size={{ xs: 12, md: 4 }}>
         <OrganicSessions />
       </Grid>
       <Grid size={{ xs: 12, md: 8 }}>
         <ProjectTimeline />
-      </Grid>
+      </Grid> */}
       <Grid size={{ xs: 12, sm: 6, md: 4 }}>
         <WeeklyOverview />
       </Grid>
@@ -107,9 +96,6 @@ const DashboardCRM = async () => {
       </Grid>
       <Grid size={{ xs: 12, md: 4 }}>
         <SalesInCountries />
-      </Grid>
-      <Grid size={{ xs: 12, md: 8 }}>
-        <UserTable tableData={data} />
       </Grid>
     </Grid>
   )

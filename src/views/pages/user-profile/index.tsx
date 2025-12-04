@@ -3,14 +3,13 @@
 // React Imports
 import { useState } from 'react'
 import type { ReactElement, SyntheticEvent } from 'react'
-
+import { useAuth } from '@/components/AuthContext'
 // MUI Imports
 import Grid from '@mui/material/Grid2'
 import Tab from '@mui/material/Tab'
 import TabContext from '@mui/lab/TabContext'
 import TabPanel from '@mui/lab/TabPanel'
 
-// Type Imports
 import type { Data } from '@/types/pages/profileTypes'
 
 // Component Imports
@@ -47,28 +46,10 @@ const UserProfile = ({ tabContentList, data }: { tabContentList: { [key: string]
                 label={
                   <div className='flex items-center gap-2'>
                     <i className='ri-team-line text-lg' />
-                    Teams
+                    Klicks
                   </div>
                 }
                 value='teams'
-              />
-              <Tab
-                label={
-                  <div className='flex items-center gap-2'>
-                    <i className='ri-computer-line text-lg' />
-                    Projects
-                  </div>
-                }
-                value='projects'
-              />
-              <Tab
-                label={
-                  <div className='flex items-center gap-2'>
-                    <i className='ri-link-m text-lg' />
-                    Connections
-                  </div>
-                }
-                value='connections'
               />
             </CustomTabList>
 

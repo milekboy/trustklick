@@ -174,10 +174,9 @@ const StackedBarChart = () => {
     <Card className='bs-full flex flex-col'>
       <CardContent>
         <div className='flex flex-wrap items-center gap-1'>
-          <Typography variant='h5'>$88.5k</Typography>
-          <Typography color='error.main'>-18%</Typography>
+          <Typography variant='h5'>₦50,000</Typography>
         </div>
-        <Typography variant='subtitle1'>Total Profit</Typography>
+        <Typography variant='subtitle1'>Total Income</Typography>
       </CardContent>
       <CardContent className='flex flex-grow items-center'>
         <AppReactApexCharts type='bar' height={84} width='100%' options={options} series={series} />

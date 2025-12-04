@@ -111,10 +111,10 @@ const DonutChart = () => {
     <Card className='bs-full'>
       <CardContent className='pbe-0'>
         <div className='flex flex-wrap items-center gap-1'>
-          <Typography variant='h5'>$27.9k</Typography>
+          <Typography variant='h5'>200 Klickers</Typography>
           <Typography color='success.main'>+16%</Typography>
         </div>
-        <Typography variant='subtitle1'>Total Growth</Typography>
+        <Typography variant='subtitle1'>Personal Klick Growth </Typography>
         <AppReactApexCharts type='donut' height={127} width='100%' options={options} series={series} />
       </CardContent>
     </Card>
