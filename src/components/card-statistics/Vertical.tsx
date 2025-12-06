@@ -1,10 +1,11 @@
-// MUI Imports
+'use client'
+import { useEffect, useState } from 'react'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import Chip from '@mui/material/Chip'
-
-// Third-party Imports
+import NetworkInstance from '../NetworkInstance'
+import { useAuth } from '../AuthContext'
 import classnames from 'classnames'
 
 // Types Imports
@@ -14,9 +15,30 @@ import type { CardStatsVerticalProps } from '@/types/pages/widgetTypes'
 import CustomAvatar from '@core/components/mui/Avatar'
 
 const CardStatVertical = (props: CardStatsVerticalProps) => {
+  const api = NetworkInstance()
+  const { token } = useAuth()
+
+  const [klicks, setKlicks] = useState<any[]>([])
+  useEffect(() => {
+    const fetchKlicks = async () => {
+      try {
+        const res = await api.get('/klicks', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        setKlicks(res.data.data)
+      } catch (err) {
+        console.error('Error fetching klicks:', err)
+      } finally {
+        return
+      }
+    }
+
+    fetchKlicks()
+  }, [token])
   // Props
-  const { title, stats, avatarIcon, avatarColor, trendNumber, trend, chipText, chipColor, avatarSkin, avatarSize } =
-    props
+  const { title, avatarIcon, avatarColor, trendNumber, trend, chipText, chipColor, avatarSkin, avatarSize } = props
 
   return (
     <Card>
@@ -38,7 +60,7 @@ const CardStatVertical = (props: CardStatsVerticalProps) => {
       </CardContent>
       <CardContent className='flex flex-col items-start gap-4'>
         <div className='flex flex-col flex-wrap gap-1'>
-          <Typography variant='h5'>{stats}</Typography>
+          <Typography variant='h5'>{klicks.length}</Typography>
           <Typography>{title}</Typography>
         </div>
         <Chip size='small' variant='tonal' label={chipText} color={chipColor} />

@@ -111,7 +111,7 @@ export default function KlickList() {
                   <Button
                     variant='outlined'
                     size='small'
-                    onClick={() => (window.location.href = `/klicks/${klick.id}`)}
+                    onClick={() => (window.location.href = `/dashboards/view-klicks/${klick.id}`)}
                   >
                     View
                   </Button>

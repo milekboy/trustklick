@@ -1,4 +1,3 @@
-// MUI Imports
 import Grid from '@mui/material/Grid2'
 
 // Components Imports
@@ -20,26 +19,7 @@ import KlickList from '@views/dashboards/crm/UserTable'
 // Server Action Imports
 import { getServerMode } from '@core/utils/serverHelpers'
 
-// Data Imports
 import { getUserData } from '@/app/server/actions'
-
-/**
- * ! If you need data using an API call, uncomment the below API code, update the `process.env.API_URL` variable in the
- * ! `.env` file found at root of your project and also update the API endpoints like `/apps/user-list` in below example.
- * ! Also, remove the above server action import and the action itself from the `src/app/server/actions.ts` file to clean up unused code
- * ! because we've used the server action for getting our static data.
- */
-
-/* const getUserData = async () => {
-  // Vars
-  const res = await fetch(`${process.env.API_URL}/apps/user-list`)
-
-  if (!res.ok) {
-    throw new Error('Failed to fetch userData')
-  }
-
-  return res.json()
-} */
 
 const DashboardCRM = async () => {
   // Vars
@@ -53,7 +33,7 @@ const DashboardCRM = async () => {
       </Grid>
       <Grid size={{ xs: 12, md: 4, sm: 3 }}>
         <CardStatVertical
-          stats='15'
+          stats='5'
           title='Total Klicks'
           trendNumber='2'
           chipText='Last 4 Month'
