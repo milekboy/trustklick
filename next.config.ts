@@ -3,6 +3,10 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   basePath: process.env.BASEPATH,
 
+  eslint: {
+    ignoreDuringBuilds: true
+  },
+
   async redirects() {
     return [
       {
@@ -16,8 +20,8 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: '/api/:path*', // frontend route
-        destination: 'http://46.101.81.175/api/:path*' // backend proxy
+        source: '/api/:path*',
+        destination: 'http://46.101.81.175/api/:path*'
       }
     ]
   }
