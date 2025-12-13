@@ -3,22 +3,17 @@ import Grid from '@mui/material/Grid2'
 // Components Imports
 import Award from '@views/dashboards/crm/Award'
 import CardStatVertical from '@components/card-statistics/Vertical'
-import StackedBarChart from '@views/dashboards/crm/StackedBarChart'
 import DonutChart from '@views/dashboards/crm/DonutChart'
-import OrganicSessions from '@views/dashboards/crm/OrganicSessions'
-import ProjectTimeline from '@views/dashboards/crm/ProjectTimeline'
-import WeeklyOverview from '@views/dashboards/crm/WeeklyOverview'
-import SocialNetworkVisits from '@views/dashboards/crm/SocialNetworkVisits'
-import MonthlyBudget from '@views/dashboards/crm/MonthlyBudget'
-import MeetingSchedule from '@views/dashboards/crm/MeetingSchedule'
-import ExternalLinks from '@views/dashboards/crm/ExternalLinks'
-import PaymentHistory from '@views/dashboards/crm/PaymentHistory'
-import SalesInCountries from '@views/dashboards/crm/SalesInCountries'
-import UserTable from '@views/dashboards/crm/UserTable'
 import KlickList from '@views/dashboards/crm/UserTable'
+import ContributionTrends from '@views/dashboards/crm/ContributionTrends'
+import RecentContributions from '@views/dashboards/crm/RecentContributions'
+import ActiveCycles from '@views/dashboards/crm/ActiveCycles'
+import MemberStatistics from '@views/dashboards/crm/MemberStatistics'
+import QuickActions from '@views/dashboards/crm/QuickActions'
+import ContributionTimeline from '@views/dashboards/crm/ContributionTimeline'
+
 // Server Action Imports
 import { getServerMode } from '@core/utils/serverHelpers'
-
 import { getUserData } from '@/app/server/actions'
 
 const DashboardCRM = async () => {
@@ -28,6 +23,7 @@ const DashboardCRM = async () => {
 
   return (
     <Grid container spacing={6}>
+      {/* Row 1: Wallet, Total Klicks, Donut Chart */}
       <Grid size={{ xs: 12, md: 4 }}>
         <Award />
       </Grid>
@@ -43,39 +39,39 @@ const DashboardCRM = async () => {
           chipColor='secondary'
         />
       </Grid>
-
       <Grid size={{ xs: 12, sm: 4, md: 4 }}>
         <DonutChart />
       </Grid>
+
+      {/* Row 2: Klicks List */}
       <Grid size={{ xs: 12, md: 12 }}>
         <KlickList />
       </Grid>
+
+      {/* Row 3: Contribution Trends (Full Width) */}
+      <Grid size={{ xs: 12 }}>
+        <ContributionTrends />
+      </Grid>
+
+      {/* Row 4: Recent Contributions and Active Cycles */}
+      <Grid size={{ xs: 12, md: 12 }}>
+        <RecentContributions />
+      </Grid>
       {/* <Grid size={{ xs: 12, md: 4 }}>
-        <OrganicSessions />
-      </Grid>
-      <Grid size={{ xs: 12, md: 8 }}>
-        <ProjectTimeline />
+        <ActiveCycles />
       </Grid> */}
-      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-        <WeeklyOverview />
+
+      {/* Row 5: Member Statistics and Quick Actions */}
+      <Grid size={{ xs: 12, md: 12 }}>
+        <MemberStatistics />
       </Grid>
-      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-        <SocialNetworkVisits />
-      </Grid>
-      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-        <MonthlyBudget />
-      </Grid>
-      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-        <MeetingSchedule />
-      </Grid>
-      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-        <ExternalLinks />
-      </Grid>
-      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-        <PaymentHistory serverMode={serverMode} />
-      </Grid>
-      <Grid size={{ xs: 12, md: 4 }}>
-        <SalesInCountries />
+      {/* <Grid size={{ xs: 12, md: 6 }}>
+        <QuickActions />
+      </Grid> */}
+
+      {/* Row 6: Activity Timeline (Full Width) */}
+      <Grid size={{ xs: 12 }}>
+        <ContributionTimeline />
       </Grid>
     </Grid>
   )

@@ -1,5 +1,14 @@
+'use client'
 // Third-party Imports
 import classnames from 'classnames'
+import { useState } from 'react'
+
+// MUI Imports
+import TextField from '@mui/material/TextField'
+import InputAdornment from '@mui/material/InputAdornment'
+import IconButton from '@mui/material/IconButton'
+import Tooltip from '@mui/material/Tooltip'
+import Box from '@mui/material/Box'
 
 // Type Imports
 import type { ShortcutsType } from '@components/layout/shared/ShortcutsDropdown'
@@ -14,7 +23,7 @@ import UserDropdown from '@components/layout/shared/UserDropdown'
 
 // Util Imports
 import { verticalLayoutClasses } from '@layouts/utils/layoutClasses'
-import { IconButton } from '@mui/material'
+
 // Vars
 const shortcuts: ShortcutsType[] = [
   {
@@ -24,8 +33,7 @@ const shortcuts: ShortcutsType[] = [
     subtitle: 'Create your own Klick and invite your members'
   },
   {
-    url: '/apps/calendar',
-
+    url: '/dashboards/join-klick',
     icon: 'ri-group-3-line',
     title: 'Join Existing Klick',
     subtitle: 'Join an existing Klick and start saving'
@@ -80,39 +88,90 @@ const notifications: NotificationsType[] = [
 ]
 
 const NavbarContent = () => {
+  const [searchValue, setSearchValue] = useState('')
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchValue(e.target.value)
+    // TODO: Implement search functionality
+  }
+
+  const handleClearSearch = () => {
+    setSearchValue('')
+  }
+
   return (
-    <div className={classnames(verticalLayoutClasses.navbarContent, 'flex items-center justify-between gap-4 is-full')}>
-      <div className='flex items-center gap-[7px]'>
+    <div
+      className={classnames(
+        verticalLayoutClasses.navbarContent,
+        'flex items-center justify-between gap-4 is-full px-4 py-2'
+      )}
+    >
+      <div className='flex items-center gap-4 flex-1 min-w-0'>
         <NavToggle />
-        <div className='lg:w-96 '>
-          <div className='relative'>
-            <input
-              type='text'
-              placeholder='Search Klicks...'
-              className='
-            w-full px-4 py-3 rounded-xl 
-            bg-gray-500 text-gray-800
-            placeholder-gray-800
-            focus:outline-none focus:ring-2 focus:ring-purple-500
-          '
-            />
-
-            <span
-              className='
-          absolute right-3 top-1/2 -translate-y-1/2 
-          text-purple-600 font-medium
-        '
-            >
-              <IconButton className='text-textPrimary'>
-                <i className='ri-search-line' />
-              </IconButton>
-            </span>
-          </div>
-        </div>
+        <Box className='flex-1 max-w-md lg:max-w-lg xl:max-w-xl'>
+          <TextField
+            fullWidth
+            size='small'
+            placeholder='Search Klicks, members, cycles...'
+            value={searchValue}
+            onChange={handleSearch}
+            variant='outlined'
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position='start'>
+                    <i className='ri-search-line text-xl text-textSecondary' />
+                  </InputAdornment>
+                ),
+                endAdornment: searchValue && (
+                  <InputAdornment position='end'>
+                    <Tooltip title='Clear search'>
+                      <IconButton
+                        size='small'
+                        edge='end'
+                        onClick={handleClearSearch}
+                        className='text-textSecondary hover:text-textPrimary'
+                      >
+                        <i className='ri-close-line text-lg' />
+                      </IconButton>
+                    </Tooltip>
+                  </InputAdornment>
+                )
+              }
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: 'var(--mui-palette-background-paper)',
+                borderRadius: 'var(--mui-shape-customBorderRadius-lg)',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  backgroundColor: 'var(--mui-palette-action-hover)',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'var(--mui-palette-primary-main)'
+                  }
+                },
+                '&.Mui-focused': {
+                  backgroundColor: 'var(--mui-palette-background-paper)',
+                  boxShadow: '0 0 0 3px var(--mui-palette-primary-lightOpacity)',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderWidth: '1.5px',
+                    borderColor: 'var(--mui-palette-primary-main)'
+                  }
+                },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'var(--mui-palette-divider)'
+                }
+              },
+              '& .MuiOutlinedInput-input': {
+                padding: '8px 12px',
+                fontSize: '0.9375rem'
+              }
+            }}
+          />
+        </Box>
       </div>
-      <div className='flex items-center'>
+      <div className='flex items-center gap-1'>
         {/* <LanguageDropdown /> */}
-
         <ShortcutsDropdown shortcuts={shortcuts} />
         <NotificationsDropdown notifications={notifications} />
         <UserDropdown />

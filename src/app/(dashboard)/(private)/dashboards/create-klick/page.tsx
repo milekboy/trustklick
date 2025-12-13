@@ -17,8 +17,13 @@ import TextField from '@mui/material/TextField'
 import CardHeader from '@mui/material/CardHeader'
 import CardContent from '@mui/material/CardContent'
 import InputAdornment from '@mui/material/InputAdornment'
+import Typography from '@mui/material/Typography'
+import Divider from '@mui/material/Divider'
+import Box from '@mui/material/Box'
+import Chip from '@mui/material/Chip'
 import { useAuth } from '@/components/AuthContext'
 import React from 'react'
+
 export default function CreateKlick() {
   const api: any = NetworkInstance()
   const router = useRouter()
@@ -29,11 +34,13 @@ export default function CreateKlick() {
     announcement: ''
   })
   const [openCongrats, setOpenCongrats] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const [toast, setToast] = useState({
     message: '',
     type: ''
   })
+
   const Transition = React.forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
     ref: React.Ref<unknown>
@@ -47,6 +54,7 @@ export default function CreateKlick() {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault()
+    setLoading(true)
 
     try {
       const res = await api.post('/klicks', formData, {
@@ -68,151 +76,324 @@ export default function CreateKlick() {
         message: error?.response?.data?.message || 'Something went wrong',
         type: 'error'
       })
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
     <div className='space-y-6'>
+      {/* Success Dialog */}
       <Dialog
         open={openCongrats}
         TransitionComponent={Transition}
         keepMounted
         onClose={() => setOpenCongrats(false)}
-        maxWidth='xs'
+        maxWidth='sm'
         fullWidth
       >
-        <DialogTitle className='text-center text-xl font-semibold'>🎉 Congratulations!</DialogTitle>
-
-        <DialogContent dividers>
-          <p className='text-center text-textSecondary'>
-            This is the beginning of something amazing!
-            <br />
-            Your Klick has been created successfully.
-            <br />
-            Share your link, invite your people, and watch your community grow.
-          </p>
+        <DialogContent className='text-center p-8'>
+          <Box className='mb-4'>
+            <div className='inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-4'>
+              <i className='ri-checkbox-circle-line text-5xl text-primary' />
+            </div>
+            <DialogTitle className='text-2xl font-bold p-0 mb-2'>🎉 Congratulations!</DialogTitle>
+            <Typography variant='body1' color='text.secondary' className='mb-6'>
+              Your Klick has been created successfully! Share your invite link and start building your community.
+            </Typography>
+          </Box>
         </DialogContent>
-
-        <DialogActions className='flex justify-between px-4 pb-4'>
+        <DialogActions className='flex justify-center gap-3 px-6 pb-6'>
           <Button
             variant='contained'
+            size='large'
             onClick={() => {
               setOpenCongrats(false)
               router.push('/dashboards/klicks')
             }}
+            startIcon={<i className='ri-eye-line' />}
           >
             View All Klicks
           </Button>
-
-          <Button variant='outlined' color='secondary' onClick={() => setOpenCongrats(false)}>
-            Cancel
+          <Button variant='outlined' size='large' onClick={() => setOpenCongrats(false)}>
+            Close
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Top Intro Section */}
-      <div className='flex flex-col gap-2'>
-        <h2 className='text-2xl font-semibold text-textPrimary'>Start a New Klick</h2>
-        <p className='text-textSecondary max-w-xl'>
-          Create a private or public Klick for your community, team, class, friends or organization. Add your WhatsApp
-          link, make announcements, and share the invite link instantly.
-        </p>
-
-        <div className='flex gap-3 mt-3'>
-          <Button variant='outlined' onClick={() => router.push('/dashboards/klicks')}>
-            View All Klicks
-          </Button>
-          <Button variant='text' onClick={() => router.push('/klicks/join')}>
-            Join a Klick
-          </Button>
-        </div>
-      </div>
+      {/* Hero Section */}
+      <Card className='bg-gradient-to-br from-primary/5 via-background-paper to-primary/5 border-2 border-primary/20'>
+        <CardContent className='p-8'>
+          <Grid container spacing={4} alignItems='center'>
+            <Grid size={{ xs: 12, md: 8 }}>
+              <div className='flex items-center gap-3 mb-4'>
+                <div className='flex items-center justify-center w-16 h-16 rounded-xl bg-primary/10'>
+                  <i className='ri-add-circle-line text-3xl text-primary' />
+                </div>
+                <div>
+                  <Typography variant='h3' className='font-bold mb-1'>
+                    Create Your Klick
+                  </Typography>
+                  <Chip label='New' color='primary' size='small' variant='tonal' />
+                </div>
+              </div>
+              <Typography variant='h6' color='text.secondary' className='mb-4 max-w-2xl'>
+                Start a new contribution group for your community, team, or organization. Set up your Klick in minutes
+                and begin collecting contributions from members.
+              </Typography>
+              <div className='flex flex-wrap gap-3'>
+                <Button
+                  variant='outlined'
+                  size='large'
+                  onClick={() => router.push('/dashboards/klicks')}
+                  startIcon={<i className='ri-list-check' />}
+                >
+                  View All Klicks
+                </Button>
+                <Button
+                  variant='text'
+                  size='large'
+                  onClick={() => router.push('/dashboards/join-klick')}
+                  startIcon={<i className='ri-user-add-line' />}
+                >
+                  Join a Klick
+                </Button>
+              </div>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <div className='flex flex-col gap-4'>
+                <Card variant='outlined' className='p-4 bg-background-paper/50'>
+                  <div className='flex items-center gap-3 mb-2'>
+                    <i className='ri-group-line text-2xl text-primary' />
+                    <Typography variant='body2' className='font-semibold'>
+                      Community Building
+                    </Typography>
+                  </div>
+                  <Typography variant='body2' color='text.secondary'>
+                    Bring people together for shared financial goals
+                  </Typography>
+                </Card>
+                <Card variant='outlined' className='p-4 bg-background-paper/50'>
+                  <div className='flex items-center gap-3 mb-2'>
+                    <i className='ri-shield-check-line text-2xl text-success' />
+                    <Typography variant='body2' className='font-semibold'>
+                      Secure & Trusted
+                    </Typography>
+                  </div>
+                  <Typography variant='body2' color='text.secondary'>
+                    Safe and reliable contribution management
+                  </Typography>
+                </Card>
+                <Card variant='outlined' className='p-4 bg-background-paper/50'>
+                  <div className='flex items-center gap-3 mb-2'>
+                    <i className='ri-time-line text-2xl text-info' />
+                    <Typography variant='body2' className='font-semibold'>
+                      Quick Setup
+                    </Typography>
+                  </div>
+                  <Typography variant='body2' color='text.secondary'>
+                    Get started in less than 2 minutes
+                  </Typography>
+                </Card>
+              </div>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
 
       {toast.message && (
         <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: '' })} />
       )}
 
       {/* Form Card */}
-      <Card>
-        <CardHeader title='Create a Klick and share' subheader='Fill in the details below to set up your new Klick' />
-
-        <CardContent>
+      <Card className='shadow-lg'>
+        <CardHeader
+          title={
+            <div className='flex items-center gap-3'>
+              <div className='flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10'>
+                <i className='ri-file-edit-line text-xl text-primary' />
+              </div>
+              <div>
+                <Typography variant='h5' className='font-bold'>
+                  Klick Details
+                </Typography>
+                <Typography variant='body2' color='text.secondary' className='mt-1'>
+                  Fill in the information below to create your Klick
+                </Typography>
+              </div>
+            </div>
+          }
+          className='pb-4'
+        />
+        <Divider />
+        <CardContent className='p-6'>
           <form onSubmit={handleSubmit}>
             <Grid container spacing={5}>
-              {/* Name */}
+              {/* Klick Name */}
               <Grid size={{ xs: 12 }}>
+                <Typography variant='body2' className='font-semibold mb-2 flex items-center gap-2'>
+                  <i className='ri-group-line text-lg text-primary' />
+                  Klick Name
+                </Typography>
                 <TextField
                   fullWidth
                   name='name'
-                  label='Klick Name'
-                  placeholder='Organisation 1...'
+                  label='Enter a name for your Klick'
+                  placeholder='e.g., Office Savings Group, Family Fund, Project Contributors...'
                   value={formData.name}
                   onChange={handleChange}
+                  required
+                  // size='large'
                   slotProps={{
                     input: {
                       startAdornment: (
                         <InputAdornment position='start'>
-                          <i className='ri-group-line' />
+                          <i className='ri-group-line text-xl text-primary' />
                         </InputAdornment>
                       )
                     }
                   }}
                 />
+                <Typography variant='caption' color='text.secondary' className='mt-1 ml-1'>
+                  Choose a clear, descriptive name that members will recognize
+                </Typography>
               </Grid>
 
-              {/* WhatsApp link */}
+              <Divider className='w-full my-2' />
+
+              {/* WhatsApp Group Link */}
               <Grid size={{ xs: 12 }}>
+                <Typography variant='body2' className='font-semibold mb-2 flex items-center gap-2'>
+                  <i className='ri-whatsapp-line text-lg text-success' />
+                  WhatsApp Group Link
+                </Typography>
                 <TextField
                   fullWidth
                   type='url'
                   name='whatsapp_group_link'
-                  label='Whatsapp Group Link'
-                  placeholder='https://'
+                  label='Paste your WhatsApp group invite link'
+                  placeholder='https://chat.whatsapp.com/...'
                   value={formData.whatsapp_group_link}
                   onChange={handleChange}
+                  required
+                  // size='large'
                   slotProps={{
                     input: {
                       startAdornment: (
                         <InputAdornment position='start'>
-                          <i className='ri-links-line' />
+                          <i className='ri-whatsapp-line text-xl text-success' />
                         </InputAdornment>
                       )
                     }
                   }}
                 />
+                <Typography variant='caption' color='text.secondary' className='mt-1 ml-1'>
+                  This link will be shared with members to join your WhatsApp group
+                </Typography>
               </Grid>
+
+              <Divider className='w-full my-2' />
 
               {/* Announcement */}
               <Grid size={{ xs: 12 }}>
+                <Typography variant='body2' className='font-semibold mb-2 flex items-center gap-2'>
+                  <i className='ri-megaphone-line text-lg text-warning' />
+                  Announcement
+                  <Chip label='Optional' size='small' variant='outlined' className='ml-2' />
+                </Typography>
                 <TextField
                   fullWidth
                   multiline
-                  rows={4}
+                  rows={5}
                   name='announcement'
-                  label='Announcement'
-                  placeholder='Leave a message'
+                  label='Add an announcement or welcome message'
+                  placeholder='Welcome to our Klick! This group is for...'
                   value={formData.announcement}
                   onChange={handleChange}
-                  sx={{ '& .MuiOutlinedInput-root': { alignItems: 'baseline' } }}
+                  // size='large'
                   slotProps={{
                     input: {
                       startAdornment: (
-                        <InputAdornment position='start'>
-                          <i className='ri-message-2-line' />
+                        <InputAdornment position='start' className='self-start mt-2'>
+                          <i className='ri-megaphone-line text-xl text-warning' />
                         </InputAdornment>
                       )
                     }
                   }}
+                  sx={{ '& .MuiOutlinedInput-root': { alignItems: 'flex-start' } }}
                 />
+                <Typography variant='caption' color='text.secondary' className='mt-1 ml-1'>
+                  Share important information or set expectations for your Klick members
+                </Typography>
               </Grid>
 
-              <Grid size={{ xs: 12 }}>
-                <Button variant='contained' type='submit' fullWidth>
-                  Submit
-                </Button>
+              <Grid size={{ xs: 12 }} className='mt-4'>
+                <Divider className='mb-6' />
+                <div className='flex flex-col sm:flex-row gap-3 justify-end'>
+                  <Button
+                    variant='outlined'
+                    size='large'
+                    onClick={() => router.push('/dashboards/klicks')}
+                    startIcon={<i className='ri-arrow-left-line' />}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant='contained'
+                    type='submit'
+                    size='large'
+                    disabled={loading}
+                    startIcon={
+                      loading ? <i className='ri-loader-4-line animate-spin' /> : <i className='ri-check-line' />
+                    }
+                    sx={{ minWidth: '160px' }}
+                  >
+                    {loading ? 'Creating...' : 'Create Klick'}
+                  </Button>
+                </div>
               </Grid>
             </Grid>
           </form>
+        </CardContent>
+      </Card>
+
+      {/* Help Section */}
+      <Card variant='outlined' className='bg-info/5'>
+        <CardContent className='p-6'>
+          <div className='flex items-start gap-4'>
+            <div className='flex items-center justify-center w-12 h-12 rounded-lg bg-info/10 flex-shrink-0'>
+              <i className='ri-question-line text-2xl text-info' />
+            </div>
+            <div className='flex-1'>
+              <Typography variant='h6' className='font-semibold mb-2'>
+                Need Help?
+              </Typography>
+              <Typography variant='body2' color='text.secondary' className='mb-3'>
+                Creating a Klick is simple! Just provide a name, add your WhatsApp group link, and optionally include an
+                announcement. Once created, you'll receive an invite link to share with members.
+              </Typography>
+              <div className='flex flex-wrap gap-2'>
+                <Chip
+                  icon={<i className='ri-lightbulb-line' />}
+                  label='Tip: Use a clear, descriptive name'
+                  size='small'
+                  variant='outlined'
+                />
+                <Chip
+                  icon={<i className='ri-link' />}
+                  label='WhatsApp link is required'
+                  size='small'
+                  variant='outlined'
+                />
+                <Chip
+                  icon={<i className='ri-megaphone-line' />}
+                  label='Announcement is optional'
+                  size='small'
+                  variant='outlined'
+                />
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
