@@ -201,6 +201,8 @@ export default function SingleKlickPage() {
     end_date: ''
   })
 
+  const [inviteEmail, setInviteEmail] = useState('')
+
   const [toast, setToast] = useState({
     message: '',
     type: ''
@@ -522,6 +524,14 @@ export default function SingleKlickPage() {
     }
   }
 
+  const handleInviteMember = () => {
+    if (!inviteEmail) return
+    // Mock invite API call
+    console.log('Inviting:', inviteEmail)
+    setToast({ message: `Invite sent to ${inviteEmail}`, type: 'success' })
+    setInviteEmail('')
+  }
+
   if (loading) {
     return (
       <div className='flex justify-center items-center min-h-[400px]'>
@@ -626,9 +636,9 @@ export default function SingleKlickPage() {
               />
               {isAdmin && (
                 <Tab
-                  value='settings'
-                  label='Settings'
-                  icon={<i className='ri-settings-3-line' />}
+                  value='invite'
+                  label='Invite new member'
+                  icon={<i className='ri-mail-send-line' />}
                   iconPosition='start'
                 />
               )}
@@ -1127,12 +1137,39 @@ export default function SingleKlickPage() {
             </TabPanel>
 
             {/* Settings Tab */}
-            <TabPanel value='settings' className='space-y-4'>
+            {/* Invite Tab */}
+            <TabPanel value='invite' className='space-y-4'>
               <Typography variant='h6' className='font-semibold mb-4'>
-                Klick Settings
+                Invite New Member
               </Typography>
-              <Card variant='outlined' className='p-4'>
-                <Typography color='text.secondary'>Settings coming soon...</Typography>
+              <Card variant='outlined' className='p-6'>
+                <Grid container spacing={2} alignItems='center'>
+                  <Grid size={{ xs: 12, md: 8 }}>
+                    <Typography variant='body1' className='mb-4'>
+                      Send an invitation email to add a new member to this Klick.
+                    </Typography>
+                    <div className='flex gap-3'>
+                      <TextField
+                        fullWidth
+                        type='email'
+                        label='Email Address'
+                        placeholder='Enter email address'
+                        value={inviteEmail}
+                        onChange={e => setInviteEmail(e.target.value)}
+                        size='small'
+                      />
+                      <Button
+                        variant='contained'
+                        onClick={handleInviteMember}
+                        startIcon={<i className='ri-send-plane-fill' />}
+                        disabled={!inviteEmail}
+                        sx={{ minWidth: 120 }}
+                      >
+                        Invite
+                      </Button>
+                    </div>
+                  </Grid>
+                </Grid>
               </Card>
             </TabPanel>
           </CardContent>
@@ -1144,7 +1181,7 @@ export default function SingleKlickPage() {
         <DialogTitle>Create New Cycle</DialogTitle>
         <DialogContent>
           <Grid container spacing={4} className='mt-2'>
-            <Grid size={{ xs: 12 }}>
+            {/* <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
                 type='number'
@@ -1158,7 +1195,7 @@ export default function SingleKlickPage() {
                   }
                 }}
               />
-            </Grid>
+            </Grid> */}
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth

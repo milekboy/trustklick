@@ -18,6 +18,7 @@ import CardHeader from '@mui/material/CardHeader'
 import CardContent from '@mui/material/CardContent'
 import InputAdornment from '@mui/material/InputAdornment'
 import Typography from '@mui/material/Typography'
+import IconButton from '@mui/material/IconButton'
 import Divider from '@mui/material/Divider'
 import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
@@ -35,6 +36,7 @@ export default function CreateKlick() {
   })
   const [openCongrats, setOpenCongrats] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [inviteLink, setInviteLink] = useState('')
 
   const [toast, setToast] = useState({
     message: '',
@@ -64,6 +66,9 @@ export default function CreateKlick() {
       })
 
       setToast({ message: res.data.message, type: 'success' })
+      if (res.data.data?.invite_url) {
+        setInviteLink(res.data.data.invite_url)
+      }
       setOpenCongrats(true)
 
       setFormData({
@@ -101,6 +106,31 @@ export default function CreateKlick() {
             <Typography variant='body1' color='text.secondary' className='mb-6'>
               Your Klick has been created successfully! Share your invite link and start building your community.
             </Typography>
+
+            {inviteLink && (
+              <TextField
+                fullWidth
+                value={inviteLink}
+                label='Invite Link'
+                variant='outlined'
+                InputProps={{
+                  readOnly: true,
+                  endAdornment: (
+                    <InputAdornment position='end'>
+                      <IconButton
+                        onClick={() => {
+                          navigator.clipboard.writeText(inviteLink)
+                          setToast({ message: 'Link copied!', type: 'success' })
+                        }}
+                        edge='end'
+                      >
+                        <i className='ri-file-copy-line' />
+                      </IconButton>
+                    </InputAdornment>
+                  )
+                }}
+              />
+            )}
           </Box>
         </DialogContent>
         <DialogActions className='flex justify-center gap-3 px-6 pb-6'>
