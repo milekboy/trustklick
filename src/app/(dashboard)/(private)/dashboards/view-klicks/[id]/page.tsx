@@ -36,6 +36,10 @@ import ListItemAvatar from '@mui/material/ListItemAvatar'
 import ListItemText from '@mui/material/ListItemText'
 import ListItemSecondaryAction from '@mui/material/ListItemSecondaryAction'
 import Box from '@mui/material/Box'
+import Select from '@mui/material/Select'
+import MenuItem from '@mui/material/MenuItem'
+import FormControl from '@mui/material/FormControl'
+import InputLabel from '@mui/material/InputLabel'
 
 // Component Imports
 import CustomTabList from '@core/components/mui/TabList'
@@ -72,13 +76,29 @@ type JoinRequestType = {
 
 type CycleType = {
   id: number
-  cycle_number: number
+  klick_id: number
+  cycle_name: string
+  payment_frequency: string
+  currency: string
+  min_amount: string
+  saving_amount: string
+  total_slot: number
+  product_type: string
+  payment_type: string
+  invite_ref: string
+  expected_start_date: string
+  actual_start_date: string | null
   status: string
-  amount_per_member?: number
-  total_amount?: number
-  start_date?: string
-  end_date?: string
+  preffered_payment_period: string
+  account_id: number | null
+  announcement: string
   created_at: string
+  updated_at: string
+  disbursement_structure: string
+  fee_type: string
+  fee_amount: string
+  require_invite: boolean
+  expected_end_date: string | null
 }
 
 // Dummy data for testing
@@ -196,10 +216,29 @@ export default function SingleKlickPage() {
 
   // Form states
   const [cycleForm, setCycleForm] = useState({
-    amount_per_member: '',
-    start_date: '',
-    end_date: ''
+    cycle_name: '',
+    product_type: '',
+    payment_frequency: 'monthly',
+    currency: 'NGN',
+    min_amount: '',
+    saving_amount: '',
+    total_slot: '',
+    payment_type: 'fixed',
+    expected_start_date: '',
+    preffered_payment_period: '',
+    invite_ref: '',
+    announcement: '',
+    disbursement_structure: 'individual'
   })
+
+  // Participant selection state
+  type ParticipantSlot = {
+    slotNumber: number
+    member: MemberType | null
+    amount: string
+  }
+  const [participantSlots, setParticipantSlots] = useState<ParticipantSlot[]>([])
+  const [memberSearch, setMemberSearch] = useState('')
 
   const [inviteEmail, setInviteEmail] = useState('')
 
@@ -207,6 +246,27 @@ export default function SingleKlickPage() {
     message: '',
     type: ''
   })
+
+  // Initialize slots when total_slot changes
+  useEffect(() => {
+    const totalSlots = parseInt(cycleForm.total_slot) || 0
+    if (totalSlots > 0) {
+      const newSlots: ParticipantSlot[] = []
+      for (let i = 1; i <= totalSlots; i++) {
+        const existingSlot = participantSlots.find(s => s.slotNumber === i)
+        newSlots.push(
+          existingSlot || {
+            slotNumber: i,
+            member: null,
+            amount: ''
+          }
+        )
+      }
+      setParticipantSlots(newSlots)
+    } else {
+      setParticipantSlots([])
+    }
+  }, [cycleForm.total_slot])
 
   // Fetch Klick data
   useEffect(() => {
@@ -320,26 +380,106 @@ export default function SingleKlickPage() {
     setActiveTab(newValue)
   }
 
+  // Participant slot helpers
+  const handleAddParticipantToSlot = (member: MemberType, slotNumber: number) => {
+    setParticipantSlots(prev =>
+      prev.map(slot =>
+        slot.slotNumber === slotNumber
+          ? { ...slot, member, amount: cycleForm.saving_amount || '' }
+          : slot
+      )
+    )
+  }
+
+  const handleRemoveParticipantFromSlot = (slotNumber: number) => {
+    setParticipantSlots(prev =>
+      prev.map(slot => (slot.slotNumber === slotNumber ? { ...slot, member: null, amount: '' } : slot))
+    )
+  }
+
+  const handleUpdateSlotAmount = (slotNumber: number, amount: string) => {
+    setParticipantSlots(prev =>
+      prev.map(slot => (slot.slotNumber === slotNumber ? { ...slot, amount } : slot))
+    )
+  }
+
+  const handleSelectMember = (member: MemberType) => {
+    // Find first empty slot
+    const emptySlot = participantSlots.find(s => !s.member)
+    if (emptySlot) {
+      handleAddParticipantToSlot(member, emptySlot.slotNumber)
+    }
+  }
+
+  const isMemberSelected = (memberId: number) => {
+    return participantSlots.some(s => s.member?.user.id === memberId)
+  }
+
   // Create Cycle
   const handleCreateCycle = async () => {
     try {
-      const res = await api.post(
-        `/klicks/${id}/cycles`,
-        {
-          amount_per_member: parseFloat(cycleForm.amount_per_member),
-          start_date: cycleForm.start_date,
-          end_date: cycleForm.end_date
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      )
+      // Build participants array
+      const participants = participantSlots
+        .filter(slot => slot.member && slot.amount)
+        .map((slot, index) => ({
+          user_id: slot.member!.user.id,
+          amount: parseFloat(slot.amount),
+          slot: 1 // 1 slot per participant as per user requirement
+        }))
 
+      // Validate required fields
+      if (!cycleForm.cycle_name) {
+        setToast({ message: 'Cycle name is required', type: 'error' })
+        return
+      }
+      if (participants.length === 0) {
+        setToast({ message: 'Please add at least one participant', type: 'error' })
+        return
+      }
+
+      const payload = {
+        cycle_name: cycleForm.cycle_name,
+        payment_frequency: cycleForm.payment_frequency,
+        currency: cycleForm.currency,
+        min_amount: parseFloat(cycleForm.min_amount) || 0,
+        saving_amount: parseFloat(cycleForm.saving_amount) || 0,
+        total_slot: parseInt(cycleForm.total_slot),
+        product_type: cycleForm.product_type,
+        payment_type: cycleForm.payment_type,
+        expected_start_date: cycleForm.expected_start_date,
+        preffered_payment_period: cycleForm.preffered_payment_period,
+        invite_ref: cycleForm.invite_ref,
+        announcement: cycleForm.announcement,
+        disbursement_structure: cycleForm.disbursement_structure,
+        participants
+      }
+
+      const res = await api.post(`/klicks/${id}/cycles`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+console.log(res.data)
       setToast({ message: res.data.message || 'Cycle created successfully!', type: 'success' })
       setCreateCycleOpen(false)
-      setCycleForm({ amount_per_member: '', start_date: '', end_date: '' })
+      // Reset form
+      setCycleForm({
+        cycle_name: '',
+        product_type: '',
+        payment_frequency: 'monthly',
+        currency: 'NGN',
+        min_amount: '',
+        saving_amount: '',
+        total_slot: '',
+        payment_type: 'fixed',
+        expected_start_date: '',
+        preffered_payment_period: '',
+        invite_ref: '',
+        announcement: '',
+        disbursement_structure: 'individual'
+      })
+      setParticipantSlots([])
+      setMemberSearch('')
 
       // Refresh cycles
       const cyclesRes = await api.get(`/klicks/${id}/cycles`, {
@@ -720,6 +860,115 @@ export default function SingleKlickPage() {
 
               <Divider />
 
+              {/* Active Cycles Section */}
+              {cycles.length > 0 && (
+                <div>
+                  <div className='flex items-center justify-between mb-4'>
+                    <Typography variant='h6' className='font-semibold'>
+                      Active Cycles
+                    </Typography>
+                    <Button
+                      variant='text'
+                      size='small'
+                      onClick={() => setActiveTab('cycles')}
+                      endIcon={<i className='ri-arrow-right-line' />}
+                    >
+                      View All
+                    </Button>
+                  </div>
+                  <Grid container spacing={3} className='mb-6'>
+                    {cycles.slice(0, 3).map(cycle => (
+                      <Grid size={{ xs: 12, md: 6, lg: 4 }} key={cycle.id}>
+                        <Card variant='outlined' className='p-4 hover:shadow-lg transition-shadow'>
+                          <div className='flex items-start justify-between mb-3'>
+                            <div className='flex-1'>
+                              <Typography variant='h6' className='font-bold mb-1'>
+                                {cycle.cycle_name}
+                              </Typography>
+                              <Typography variant='caption' color='text.secondary'>
+                                {cycle.product_type}
+                              </Typography>
+                            </div>
+                            <Chip
+                              label={cycle.status.replace('_', ' ')}
+                              size='small'
+                              color={
+                                cycle.status === 'active'
+                                  ? 'success'
+                                  : cycle.status === 'completed'
+                                    ? 'primary'
+                                    : cycle.status === 'not_started'
+                                      ? 'warning'
+                                      : 'default'
+                              }
+                              variant='tonal'
+                            />
+                          </div>
+
+                          <Divider className='my-3' />
+
+                          <div className='space-y-2 mb-4'>
+                            <div className='flex justify-between items-center'>
+                              <Typography variant='body2' color='text.secondary'>
+                                Saving Amount:
+                              </Typography>
+                              <Typography className='font-semibold'>
+                                {cycle.currency} {parseFloat(cycle.saving_amount).toLocaleString()}
+                              </Typography>
+                            </div>
+                            <div className='flex justify-between items-center'>
+                              <Typography variant='body2' color='text.secondary'>
+                                Total Slots:
+                              </Typography>
+                              <Typography className='font-medium'>{cycle.total_slot}</Typography>
+                            </div>
+                            <div className='flex justify-between items-center'>
+                              <Typography variant='body2' color='text.secondary'>
+                                Payment:
+                              </Typography>
+                              <Typography className='font-medium capitalize'>
+                                {cycle.payment_frequency}
+                              </Typography>
+                            </div>
+                            {cycle.expected_start_date && (
+                              <div className='flex justify-between items-center'>
+                                <Typography variant='body2' color='text.secondary'>
+                                  Start Date:
+                                </Typography>
+                                <Typography variant='body2'>
+                                  {new Date(cycle.expected_start_date).toLocaleDateString()}
+                                </Typography>
+                              </div>
+                            )}
+                          </div>
+
+                          {cycle.announcement && (
+                            <Alert severity='info' icon={<i className='ri-information-line' />} className='mb-3'>
+                              <Typography variant='caption' className='line-clamp-2'>
+                                {cycle.announcement}
+                              </Typography>
+                            </Alert>
+                          )}
+
+                          <Button
+                            variant='outlined'
+                            fullWidth
+                            onClick={() => {
+                              router.push(`/dashboards/view-klicks/${id}/cycles/${cycle.id}`)
+                            }}
+                            endIcon={<i className='ri-arrow-right-line' />}
+                          >
+                            View Details
+                          </Button>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </div>
+              )}
+
+              <Divider />
+
               <div>
                 <Typography variant='h6' className='font-semibold mb-4'>
                   Quick Stats
@@ -1071,64 +1320,89 @@ export default function SingleKlickPage() {
               ) : (
                 <Grid container spacing={3}>
                   {cycles.map(cycle => (
-                    <Grid size={{ xs: 12, md: 6 }} key={cycle.id}>
-                      <Card variant='outlined' className='p-4 hover:shadow-md transition-shadow'>
-                        <div className='flex items-center justify-between mb-3'>
-                          <Typography variant='h6' className='font-semibold'>
-                            Cycle #{cycle.cycle_number}
-                          </Typography>
+                    <Grid size={{ xs: 12, md: 6, lg: 4 }} key={cycle.id}>
+                      <Card variant='outlined' className='p-4 hover:shadow-lg transition-shadow'>
+                        <div className='flex items-start justify-between mb-3'>
+                          <div className='flex-1'>
+                            <Typography variant='h6' className='font-bold mb-1'>
+                              {cycle.cycle_name}
+                            </Typography>
+                            <Typography variant='caption' color='text.secondary'>
+                              {cycle.product_type}
+                            </Typography>
+                          </div>
                           <Chip
-                            label={cycle.status}
+                            label={cycle.status.replace('_', ' ')}
                             size='small'
                             color={
                               cycle.status === 'active'
                                 ? 'success'
                                 : cycle.status === 'completed'
                                   ? 'primary'
-                                  : 'default'
+                                  : cycle.status === 'not_started'
+                                    ? 'warning'
+                                    : 'default'
                             }
                             variant='tonal'
                           />
                         </div>
-                        <div className='space-y-2'>
-                          {cycle.amount_per_member && (
+
+                        <Divider className='my-3' />
+
+                        <div className='space-y-2 mb-4'>
+                          <div className='flex justify-between items-center'>
+                            <Typography variant='body2' color='text.secondary'>
+                              Saving Amount:
+                            </Typography>
+                            <Typography className='font-semibold'>
+                              {cycle.currency} {parseFloat(cycle.saving_amount).toLocaleString()}
+                            </Typography>
+                          </div>
+                          <div className='flex justify-between items-center'>
+                            <Typography variant='body2' color='text.secondary'>
+                              Total Slots:
+                            </Typography>
+                            <Typography className='font-medium'>{cycle.total_slot}</Typography>
+                          </div>
+                          <div className='flex justify-between items-center'>
+                            <Typography variant='body2' color='text.secondary'>
+                              Payment:
+                            </Typography>
+                            <Typography className='font-medium capitalize'>
+                              {cycle.payment_frequency}
+                            </Typography>
+                          </div>
+                          {cycle.expected_start_date && (
                             <div className='flex justify-between items-center'>
-                              <Typography variant='body2' color='text.secondary'>
-                                Amount per Member:
-                              </Typography>
-                              <Typography className='font-medium text-lg'>
-                                ₦{cycle.amount_per_member.toLocaleString()}
-                              </Typography>
-                            </div>
-                          )}
-                          {cycle.total_amount && (
-                            <div className='flex justify-between items-center'>
-                              <Typography variant='body2' color='text.secondary'>
-                                Total Amount:
-                              </Typography>
-                              <Typography className='font-medium text-lg text-primary'>
-                                ₦{cycle.total_amount.toLocaleString()}
-                              </Typography>
-                            </div>
-                          )}
-                          <Divider className='my-2' />
-                          {cycle.start_date && (
-                            <div className='flex justify-between'>
                               <Typography variant='body2' color='text.secondary'>
                                 Start Date:
                               </Typography>
-                              <Typography variant='body2'>{new Date(cycle.start_date).toLocaleDateString()}</Typography>
-                            </div>
-                          )}
-                          {cycle.end_date && (
-                            <div className='flex justify-between'>
-                              <Typography variant='body2' color='text.secondary'>
-                                End Date:
+                              <Typography variant='body2'>
+                                {new Date(cycle.expected_start_date).toLocaleDateString()}
                               </Typography>
-                              <Typography variant='body2'>{new Date(cycle.end_date).toLocaleDateString()}</Typography>
                             </div>
                           )}
                         </div>
+
+                        {cycle.announcement && (
+                          <Alert severity='info' icon={<i className='ri-information-line' />} className='mb-3'>
+                            <Typography variant='caption' className='line-clamp-2'>
+                              {cycle.announcement}
+                            </Typography>
+                          </Alert>
+                        )}
+
+                        <Button
+                          variant='outlined'
+                          fullWidth
+                          onClick={() => {
+                            // Navigate to cycle detail page (to be implemented)
+                            router.push(`/dashboards/view-klicks/${id}/cycles/${cycle.id}`)
+                          }}
+                          endIcon={<i className='ri-arrow-right-line' />}
+                        >
+                          View Details
+                        </Button>
                       </Card>
                     </Grid>
                   ))}
@@ -1177,58 +1451,344 @@ export default function SingleKlickPage() {
       </Card>
 
       {/* Create Cycle Dialog */}
-      <Dialog open={createCycleOpen} onClose={() => setCreateCycleOpen(false)} maxWidth='sm' fullWidth>
-        <DialogTitle>Create New Cycle</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={4} className='mt-2'>
-            {/* <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                type='number'
-                label='Amount per Member'
-                placeholder='Enter amount'
-                value={cycleForm.amount_per_member}
-                onChange={e => setCycleForm({ ...cycleForm, amount_per_member: e.target.value })}
-                slotProps={{
-                  input: {
-                    startAdornment: <InputAdornment position='start'>₦</InputAdornment>
-                  }
-                }}
-              />
-            </Grid> */}
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                type='date'
-                label='Start Date'
-                value={cycleForm.start_date}
-                onChange={e => setCycleForm({ ...cycleForm, start_date: e.target.value })}
-                slotProps={{
-                  inputLabel: {
-                    shrink: true
-                  }
-                }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                type='date'
-                label='End Date'
-                value={cycleForm.end_date}
-                onChange={e => setCycleForm({ ...cycleForm, end_date: e.target.value })}
-                slotProps={{
-                  inputLabel: {
-                    shrink: true
-                  }
-                }}
-              />
-            </Grid>
-          </Grid>
+      <Dialog
+        open={createCycleOpen}
+        onClose={() => setCreateCycleOpen(false)}
+        maxWidth='md'
+        fullWidth
+        PaperProps={{
+          sx: { maxHeight: '90vh' }
+        }}
+      >
+        <DialogTitle>
+          <Typography variant='h5' className='font-bold'>
+            Create New Cycle
+          </Typography>
+        </DialogTitle>
+        <DialogContent dividers>
+          <div className='space-y-6'>
+            {/* Basic Details Section */}
+            <div>
+              <Typography variant='h6' className='font-semibold mb-4'>
+                Basic Details
+              </Typography>
+              <Grid container spacing={3}>
+                <Grid size={{ xs: 12 }}>
+                  <TextField
+                    fullWidth
+                    label='Cycle Name'
+                    placeholder='e.g., July Thrift'
+                    value={cycleForm.cycle_name}
+                    onChange={e => setCycleForm({ ...cycleForm, cycle_name: e.target.value })}
+                    required
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    label='Product Type'
+                    placeholder='e.g., thrift'
+                    value={cycleForm.product_type}
+                    onChange={e => setCycleForm({ ...cycleForm, product_type: e.target.value })}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <FormControl fullWidth>
+                    <InputLabel>Payment Frequency</InputLabel>
+                    <Select
+                      value={cycleForm.payment_frequency}
+                      label='Payment Frequency'
+                      onChange={e => setCycleForm({ ...cycleForm, payment_frequency: e.target.value })}
+                    >
+                      <MenuItem value='daily'>Daily</MenuItem>
+                      <MenuItem value='weekly'>Weekly</MenuItem>
+                      <MenuItem value='monthly'>Monthly</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    type='number'
+                    label='Total Slots'
+                    placeholder='Enter number of slots'
+                    value={cycleForm.total_slot}
+                    onChange={e => setCycleForm({ ...cycleForm, total_slot: e.target.value })}
+                    inputProps={{ min: 1 }}
+                  />
+                </Grid>
+              </Grid>
+            </div>
+
+            {/* Participant Selection Section - Shows when total_slot > 0 */}
+            {participantSlots.length > 0 && (
+              <div>
+                <Divider className='my-4' />
+                <Typography variant='h6' className='font-semibold mb-4'>
+                  Select Participants ({participantSlots.filter(s => s.member).length}/{participantSlots.length})
+                </Typography>
+
+                {/* Member List */}
+                <div>
+                  <TextField
+                    fullWidth
+                    size='small'
+                    placeholder='Search members...'
+                    value={memberSearch}
+                    onChange={e => setMemberSearch(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position='start'>
+                          <i className='ri-search-line' />
+                        </InputAdornment>
+                      )
+                    }}
+                    className='mb-3'
+                  />
+                  <Card variant='outlined' sx={{ maxHeight: 300, overflow: 'auto' }}>
+                    <List className='p-0'>
+                      {members
+                        .filter(
+                          member =>
+                            !memberSearch ||
+                            `${member.user.first_name} ${member.user.last_name} ${member.user.email}`
+                              .toLowerCase()
+                              .includes(memberSearch.toLowerCase())
+                        )
+                        .map((member, index) => (
+                          <div key={member.id}>
+                            <ListItem
+                              className='py-2'
+                              secondaryAction={
+                                <Button
+                                  size='small'
+                                  variant={isMemberSelected(member.user.id) ? 'outlined' : 'contained'}
+                                  disabled={
+                                    isMemberSelected(member.user.id) ||
+                                    !participantSlots.some(s => !s.member)
+                                  }
+                                  onClick={() => handleSelectMember(member)}
+                                  startIcon={
+                                    isMemberSelected(member.user.id) ? (
+                                      <i className='ri-check-line' />
+                                    ) : (
+                                      <i className='ri-add-line' />
+                                    )
+                                  }
+                                >
+                                  {isMemberSelected(member.user.id) ? 'Added' : 'Add'}
+                                </Button>
+                              }
+                            >
+                              <ListItemAvatar>
+                                <CustomAvatar skin='light' size={40}>
+                                  {getInitials(`${member.user.first_name} ${member.user.last_name}`)}
+                                </CustomAvatar>
+                              </ListItemAvatar>
+                              <ListItemText
+                                primary={`${member.user.first_name} ${member.user.last_name}`}
+                                secondary={member.user.email}
+                              />
+                            </ListItem>
+                            {index < members.length - 1 && <Divider />}
+                          </div>
+                        ))}
+                    </List>
+                  </Card>
+                </div>
+                {/* Slots Grid */}
+                <div className='mb-4'>
+                  <Typography variant='body2' color='text.secondary' className='mb-3'>
+                    Participant Slots
+                  </Typography>
+                  <Grid container spacing={2}>
+                    {participantSlots.map(slot => (
+                      <Grid size={{ xs: 12, sm: 6 }} key={slot.slotNumber}>
+                        <Card
+                          variant='outlined'
+                          className='p-3'
+                          sx={{
+                            borderColor: slot.member ? 'primary.main' : 'divider',
+                            bgcolor: slot.member ? 'action.hover' : 'transparent'
+                          }}
+                        >
+                          <div className='flex items-center justify-between mb-2'>
+                            <Typography variant='caption' color='text.secondary' className='font-medium'>
+                              Slot {slot.slotNumber}
+                            </Typography>
+                            {slot.member && (
+                              <IconButton
+                                size='small'
+                                onClick={() => handleRemoveParticipantFromSlot(slot.slotNumber)}
+                                color='error'
+                              >
+                                <i className='ri-close-line' />
+                              </IconButton>
+                            )}
+                          </div>
+                          {slot.member ? (
+                            <div>
+                              <div className='flex items-center gap-2 mb-2'>
+                                <CustomAvatar skin='light' size={32}>
+                                  {getInitials(`${slot.member.user.first_name} ${slot.member.user.last_name}`)}
+                                </CustomAvatar>
+                                <div className='flex-1 min-w-0'>
+                                  <Typography variant='body2' className='font-medium truncate'>
+                                    {slot.member.user.first_name} {slot.member.user.last_name}
+                                  </Typography>
+                                  <Typography variant='caption' color='text.secondary' className='truncate block'>
+                                    {slot.member.user.email}
+                                  </Typography>
+                                </div>
+                              </div>
+                              <TextField
+                                fullWidth
+                                size='small'
+                                type='number'
+                                label='Amount'
+                                value={slot.amount}
+                                onChange={e => handleUpdateSlotAmount(slot.slotNumber, e.target.value)}
+                                InputProps={{
+                                  startAdornment: <InputAdornment position='start'>₦</InputAdornment>
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <Typography variant='body2' color='text.secondary' className='text-center py-3'>
+                              Empty Slot
+                            </Typography>
+                          )}
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </div>
+
+              </div>
+            )}
+
+            {/* Additional Details Section */}
+            <div>
+              <Divider className='my-4' />
+              <Typography variant='h6' className='font-semibold mb-4'>
+                Additional Details
+              </Typography>
+              <Grid container spacing={3}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <FormControl fullWidth>
+                    <InputLabel>Currency</InputLabel>
+                    <Select
+                      value={cycleForm.currency}
+                      label='Currency'
+                      onChange={e => setCycleForm({ ...cycleForm, currency: e.target.value })}
+                    >
+                      <MenuItem value='NGN'>NGN (₦)</MenuItem>
+                      <MenuItem value='USD'>USD ($)</MenuItem>
+                      <MenuItem value='GBP'>GBP (£)</MenuItem>
+                      <MenuItem value='EUR'>EUR (€)</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    type='number'
+                    label='Minimum Amount'
+                    value={cycleForm.min_amount}
+                    onChange={e => setCycleForm({ ...cycleForm, min_amount: e.target.value })}
+                    InputProps={{
+                      startAdornment: <InputAdornment position='start'>₦</InputAdornment>
+                    }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    type='number'
+                    label='Saving Amount'
+                    value={cycleForm.saving_amount}
+                    onChange={e => setCycleForm({ ...cycleForm, saving_amount: e.target.value })}
+                    InputProps={{
+                      startAdornment: <InputAdornment position='start'>₦</InputAdornment>
+                    }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <FormControl fullWidth>
+                    <InputLabel>Payment Type</InputLabel>
+                    <Select
+                      value={cycleForm.payment_type}
+                      label='Payment Type'
+                      onChange={e => setCycleForm({ ...cycleForm, payment_type: e.target.value })}
+                    >
+                      <MenuItem value='fixed'>Fixed</MenuItem>
+                      <MenuItem value='flexible'>Flexible</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    type='date'
+                    label='Expected Start Date'
+                    value={cycleForm.expected_start_date}
+                    onChange={e => setCycleForm({ ...cycleForm, expected_start_date: e.target.value })}
+                    slotProps={{
+                      inputLabel: {
+                        shrink: true
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    label='Preferred Payment Period'
+                    placeholder='e.g., Usually 27th - 31st'
+                    value={cycleForm.preffered_payment_period}
+                    onChange={e => setCycleForm({ ...cycleForm, preffered_payment_period: e.target.value })}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    label='Invite Reference'
+                    placeholder='e.g., abc123'
+                    value={cycleForm.invite_ref}
+                    onChange={e => setCycleForm({ ...cycleForm, invite_ref: e.target.value })}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <FormControl fullWidth>
+                    <InputLabel>Disbursement Structure</InputLabel>
+                    <Select
+                      value={cycleForm.disbursement_structure}
+                      label='Disbursement Structure'
+                      onChange={e => setCycleForm({ ...cycleForm, disbursement_structure: e.target.value })}
+                    >
+                      <MenuItem value='individual'>Individual</MenuItem>
+                      <MenuItem value='group'>Group</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    label='Announcement'
+                    placeholder='Add any announcement for this cycle...'
+                    value={cycleForm.announcement}
+                    onChange={e => setCycleForm({ ...cycleForm, announcement: e.target.value })}
+                  />
+                </Grid>
+              </Grid>
+            </div>
+          </div>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setCreateCycleOpen(false)}>Cancel</Button>
-          <Button variant='contained' onClick={handleCreateCycle}>
+          <Button variant='contained' onClick={handleCreateCycle} size='large'>
             Create Cycle
           </Button>
         </DialogActions>
