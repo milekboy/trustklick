@@ -32,6 +32,7 @@ import Alert from '@mui/material/Alert'
 import AlertTitle from '@mui/material/AlertTitle'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
+import ListItemButton from '@mui/material/ListItemButton'
 import ListItemAvatar from '@mui/material/ListItemAvatar'
 import ListItemText from '@mui/material/ListItemText'
 import ListItemSecondaryAction from '@mui/material/ListItemSecondaryAction'
@@ -234,8 +235,11 @@ export default function SingleKlickPage() {
   // Participant selection state
   type ParticipantSlot = {
     slotNumber: number
-    member: MemberType | null
-    amount: string
+    allocations: {
+      id: string // Add unique ID for React keys
+      member: MemberType | null
+      amount: string
+    }[]
   }
   const [participantSlots, setParticipantSlots] = useState<ParticipantSlot[]>([])
   const [memberSearch, setMemberSearch] = useState('')
@@ -254,19 +258,25 @@ export default function SingleKlickPage() {
       const newSlots: ParticipantSlot[] = []
       for (let i = 1; i <= totalSlots; i++) {
         const existingSlot = participantSlots.find(s => s.slotNumber === i)
-        newSlots.push(
-          existingSlot || {
+
+        if (existingSlot && existingSlot.allocations && existingSlot.allocations.length > 0) {
+          newSlots.push(existingSlot)
+        } else {
+          newSlots.push({
             slotNumber: i,
-            member: null,
-            amount: ''
-          }
-        )
+            allocations: [{
+              id: Math.random().toString(36).substr(2, 9),
+              member: null,
+              amount: cycleForm.saving_amount || ''
+            }]
+          })
+        }
       }
       setParticipantSlots(newSlots)
     } else {
       setParticipantSlots([])
     }
-  }, [cycleForm.total_slot])
+  }, [cycleForm.total_slot, cycleForm.saving_amount])
 
   // Fetch Klick data
   useEffect(() => {
@@ -381,51 +391,102 @@ export default function SingleKlickPage() {
   }
 
   // Participant slot helpers
-  const handleAddParticipantToSlot = (member: MemberType, slotNumber: number) => {
+  const handleAddAllocationToSlot = (slotNumber: number) => {
     setParticipantSlots(prev =>
       prev.map(slot =>
         slot.slotNumber === slotNumber
-          ? { ...slot, member, amount: cycleForm.saving_amount || '' }
+          ? {
+            ...slot,
+            allocations: [
+              ...slot.allocations,
+              {
+                id: Math.random().toString(36).substr(2, 9),
+                member: null,
+                amount: cycleForm.saving_amount || ''
+              }
+            ]
+          }
           : slot
       )
     )
   }
 
-  const handleRemoveParticipantFromSlot = (slotNumber: number) => {
+  const handleRemoveAllocation = (slotNumber: number, allocationId: string) => {
     setParticipantSlots(prev =>
-      prev.map(slot => (slot.slotNumber === slotNumber ? { ...slot, member: null, amount: '' } : slot))
+      prev.map(slot => {
+        if (slot.slotNumber === slotNumber) {
+          const newAllocations = slot.allocations.filter(a => a.id !== allocationId)
+          if (newAllocations.length === 0) {
+            return { ...slot, allocations: [{ id: Math.random().toString(36).substr(2, 9), member: null, amount: cycleForm.saving_amount || '' }] }
+          }
+          return { ...slot, allocations: newAllocations }
+        }
+        return slot
+      })
     )
   }
 
-  const handleUpdateSlotAmount = (slotNumber: number, amount: string) => {
+  const handleUpdateAllocationMember = (slotNumber: number, allocationId: string, member: MemberType | null) => {
     setParticipantSlots(prev =>
-      prev.map(slot => (slot.slotNumber === slotNumber ? { ...slot, amount } : slot))
+      prev.map(slot =>
+        slot.slotNumber === slotNumber
+          ? {
+            ...slot,
+            allocations: slot.allocations.map(a =>
+              a.id === allocationId ? { ...a, member } : a
+            )
+          }
+          : slot
+      )
+    )
+  }
+
+  const handleUpdateAllocationAmount = (slotNumber: number, allocationId: string, amount: string) => {
+    setParticipantSlots(prev =>
+      prev.map(slot =>
+        slot.slotNumber === slotNumber
+          ? {
+            ...slot,
+            allocations: slot.allocations.map(a =>
+              a.id === allocationId ? { ...a, amount } : a
+            )
+          }
+          : slot
+      )
     )
   }
 
   const handleSelectMember = (member: MemberType) => {
-    // Find first empty slot
-    const emptySlot = participantSlots.find(s => !s.member)
-    if (emptySlot) {
-      handleAddParticipantToSlot(member, emptySlot.slotNumber)
+    for (const slot of participantSlots) {
+      const emptyAlloc = slot.allocations.find(a => !a.member)
+      if (emptyAlloc) {
+        handleUpdateAllocationMember(slot.slotNumber, emptyAlloc.id, member)
+        return
+      }
     }
   }
 
   const isMemberSelected = (memberId: number) => {
-    return participantSlots.some(s => s.member?.user.id === memberId)
+    return participantSlots.some(s => s.allocations.some(a => a.member?.user.id === memberId))
   }
 
   // Create Cycle
   const handleCreateCycle = async () => {
     try {
-      // Build participants array
-      const participants = participantSlots
-        .filter(slot => slot.member && slot.amount)
-        .map((slot, index) => ({
-          user_id: slot.member!.user.id,
-          amount: parseFloat(slot.amount),
-          slot: 1 // 1 slot per participant as per user requirement
-        }))
+      // Build participants array - Flatten all Allocations
+      const participants: any[] = []
+
+      participantSlots.forEach(slot => {
+        slot.allocations.forEach(allocation => {
+          if (allocation.member && allocation.amount) {
+            participants.push({
+              user_id: allocation.member.user.id,
+              amount: parseFloat(allocation.amount),
+              slot: slot.slotNumber
+            })
+          }
+        })
+      })
 
       // Validate required fields
       if (!cycleForm.cycle_name) {
@@ -459,7 +520,7 @@ export default function SingleKlickPage() {
           Authorization: `Bearer ${token}`
         }
       })
-console.log(res.data)
+      console.log(res.data)
       setToast({ message: res.data.message || 'Cycle created successfully!', type: 'success' })
       setCreateCycleOpen(false)
       // Reset form
@@ -1141,27 +1202,27 @@ console.log(res.data)
                                   },
                                   ...(isAdmin && !member.is_admin
                                     ? [
-                                        {
-                                          text: 'Remove Member',
-                                          icon: 'ri-user-unfollow-line',
-                                          menuItemProps: {
-                                            onClick: () => {
-                                              setSelectedMember(member)
-                                              setKickMemberOpen(true)
-                                            }
-                                          }
-                                        },
-                                        {
-                                          text: 'Make Admin',
-                                          icon: 'ri-vip-crown-line',
-                                          menuItemProps: {
-                                            onClick: () => {
-                                              setSelectedMember(member)
-                                              setMakeAdminOpen(true)
-                                            }
+                                      {
+                                        text: 'Remove Member',
+                                        icon: 'ri-user-unfollow-line',
+                                        menuItemProps: {
+                                          onClick: () => {
+                                            setSelectedMember(member)
+                                            setKickMemberOpen(true)
                                           }
                                         }
-                                      ]
+                                      },
+                                      {
+                                        text: 'Make Admin',
+                                        icon: 'ri-vip-crown-line',
+                                        menuItemProps: {
+                                          onClick: () => {
+                                            setSelectedMember(member)
+                                            setMakeAdminOpen(true)
+                                          }
+                                        }
+                                      }
+                                    ]
                                     : [])
                                 ]}
                               />
@@ -1523,149 +1584,146 @@ console.log(res.data)
             {/* Participant Selection Section - Shows when total_slot > 0 */}
             {participantSlots.length > 0 && (
               <div>
-                <Divider className='my-4' />
-                <Typography variant='h6' className='font-semibold mb-4'>
-                  Select Participants ({participantSlots.filter(s => s.member).length}/{participantSlots.length})
-                </Typography>
-
-                {/* Member List */}
-                <div>
-                  <TextField
-                    fullWidth
-                    size='small'
-                    placeholder='Search members...'
-                    value={memberSearch}
-                    onChange={e => setMemberSearch(e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position='start'>
-                          <i className='ri-search-line' />
-                        </InputAdornment>
-                      )
-                    }}
-                    className='mb-3'
-                  />
-                  <Card variant='outlined' sx={{ maxHeight: 300, overflow: 'auto' }}>
-                    <List className='p-0'>
-                      {members
-                        .filter(
-                          member =>
-                            !memberSearch ||
-                            `${member.user.first_name} ${member.user.last_name} ${member.user.email}`
-                              .toLowerCase()
-                              .includes(memberSearch.toLowerCase())
-                        )
-                        .map((member, index) => (
-                          <div key={member.id}>
-                            <ListItem
-                              className='py-2'
-                              secondaryAction={
-                                <Button
-                                  size='small'
-                                  variant={isMemberSelected(member.user.id) ? 'outlined' : 'contained'}
-                                  disabled={
-                                    isMemberSelected(member.user.id) ||
-                                    !participantSlots.some(s => !s.member)
-                                  }
-                                  onClick={() => handleSelectMember(member)}
-                                  startIcon={
-                                    isMemberSelected(member.user.id) ? (
-                                      <i className='ri-check-line' />
-                                    ) : (
-                                      <i className='ri-add-line' />
-                                    )
-                                  }
-                                >
-                                  {isMemberSelected(member.user.id) ? 'Added' : 'Add'}
-                                </Button>
-                              }
-                            >
-                              <ListItemAvatar>
-                                <CustomAvatar skin='light' size={40}>
-                                  {getInitials(`${member.user.first_name} ${member.user.last_name}`)}
-                                </CustomAvatar>
-                              </ListItemAvatar>
-                              <ListItemText
-                                primary={`${member.user.first_name} ${member.user.last_name}`}
-                                secondary={member.user.email}
-                              />
-                            </ListItem>
-                            {index < members.length - 1 && <Divider />}
-                          </div>
-                        ))}
-                    </List>
-                  </Card>
-                </div>
-                {/* Slots Grid */}
-                <div className='mb-4'>
-                  <Typography variant='body2' color='text.secondary' className='mb-3'>
-                    Participant Slots
+                <div className='mt-6 mb-2'>
+                  <Typography variant='subtitle1' className='font-semibold mb-3'>
+                    Assign Participants to Slots
                   </Typography>
-                  <Grid container spacing={2}>
+
+                  {/* Search Bar for Members */}
+                  <div className='mb-4 relative'>
+                    <TextField
+                      fullWidth
+                      size='small'
+                      placeholder='Search members to add...'
+                      value={memberSearch}
+                      onChange={e => setMemberSearch(e.target.value)}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position='start'>
+                            <i className='ri-search-line' />
+                          </InputAdornment>
+                        )
+                      }}
+                    />
+                    {memberSearch && (
+                      <Card variant='outlined' className='mt-1 max-h-[200px] overflow-auto absolute z-10 w-full shadow-lg'>
+                        <List dense>
+                          {members
+                            .filter(
+                              m =>
+                                m.user.first_name.toLowerCase().includes(memberSearch.toLowerCase()) ||
+                                m.user.last_name.toLowerCase().includes(memberSearch.toLowerCase())
+                            )
+                            .map(member => (
+                              <ListItem
+                                key={member.id}
+                                disablePadding
+                              >
+                                <ListItemButton
+                                  onClick={() => {
+                                    handleSelectMember(member)
+                                    setMemberSearch('')
+                                  }}
+                                  disabled={isMemberSelected(member.user.id)}
+                                >
+                                  <ListItemAvatar>
+                                    <CustomAvatar
+                                      skin='light'
+                                      color='primary'
+                                      size={30}
+                                      src={member.user.image}
+                                    >
+                                      {getInitials(`${member.user.first_name} ${member.user.last_name}`)}
+                                    </CustomAvatar>
+                                  </ListItemAvatar>
+                                  <ListItemText
+                                    primary={`${member.user.first_name} ${member.user.last_name}`}
+                                    secondary={isMemberSelected(member.user.id) ? 'Already added' : member.user.email}
+                                  />
+                                </ListItemButton>
+                              </ListItem>
+                            ))}
+                        </List>
+                      </Card>
+                    )}
+                  </div>
+
+                  {/* Slot List */}
+                  <div className='space-y-4 max-h-[400px] overflow-y-auto pr-2'>
                     {participantSlots.map(slot => (
-                      <Grid size={{ xs: 12, sm: 6 }} key={slot.slotNumber}>
-                        <Card
-                          variant='outlined'
-                          className='p-3'
-                          sx={{
-                            borderColor: slot.member ? 'primary.main' : 'divider',
-                            bgcolor: slot.member ? 'action.hover' : 'transparent'
-                          }}
-                        >
-                          <div className='flex items-center justify-between mb-2'>
-                            <Typography variant='caption' color='text.secondary' className='font-medium'>
-                              Slot {slot.slotNumber}
-                            </Typography>
-                            {slot.member && (
+                      <Card key={slot.slotNumber} variant='outlined' className='p-3 bg-gray-50'>
+                        <div className='flex items-center justify-between mb-2'>
+                          <Typography variant='subtitle2' className='font-bold text-gray-700'>
+                            Slot {slot.slotNumber}
+                          </Typography>
+                          <Button
+                            size="small"
+                            startIcon={<i className="ri-add-line" />}
+                            onClick={() => handleAddAllocationToSlot(slot.slotNumber)}
+                          >
+                            Add Person
+                          </Button>
+                        </div>
+
+                        <div className="space-y-2">
+                          {slot.allocations.map((allocation, allocIndex) => (
+                            <div key={allocation.id} className='flex items-center gap-3 bg-white p-2 rounded border border-gray-200'>
+                              <div className='flex-1'>
+                                <FormControl fullWidth size='small'>
+                                  <InputLabel>Member</InputLabel>
+                                  <Select
+                                    value={allocation.member ? allocation.member.id : ''}
+                                    label='Member'
+                                    onChange={e => {
+                                      const member = members.find(m => m.id === e.target.value)
+                                      handleUpdateAllocationMember(slot.slotNumber, allocation.id, member || null)
+                                    }}
+                                  >
+                                    <MenuItem value=''>
+                                      <em>Select Member</em>
+                                    </MenuItem>
+                                    {members.map(member => (
+                                      <MenuItem
+                                        key={member.id}
+                                        value={member.id}
+                                        disabled={isMemberSelected(member.user.id) && member.user.id !== allocation.member?.user.id}
+                                      >
+                                        {member.user.first_name} {member.user.last_name}
+                                      </MenuItem>
+                                    ))}
+                                  </Select>
+                                </FormControl>
+                              </div>
+                              <div className='w-[140px]'>
+                                <TextField
+                                  size='small'
+                                  label='Amount'
+                                  // placeholder={cycleForm.saving_amount}
+                                  value={allocation.amount}
+                                  onChange={e => handleUpdateAllocationAmount(slot.slotNumber, allocation.id, e.target.value)}
+                                  InputProps={{
+                                    startAdornment: <InputAdornment position='start'>{cycleForm.currency}</InputAdornment>
+                                  }}
+                                />
+                              </div>
                               <IconButton
                                 size='small'
-                                onClick={() => handleRemoveParticipantFromSlot(slot.slotNumber)}
                                 color='error'
+                                onClick={() => handleRemoveAllocation(slot.slotNumber, allocation.id)}
                               >
                                 <i className='ri-close-line' />
                               </IconButton>
-                            )}
-                          </div>
-                          {slot.member ? (
-                            <div>
-                              <div className='flex items-center gap-2 mb-2'>
-                                <CustomAvatar skin='light' size={32}>
-                                  {getInitials(`${slot.member.user.first_name} ${slot.member.user.last_name}`)}
-                                </CustomAvatar>
-                                <div className='flex-1 min-w-0'>
-                                  <Typography variant='body2' className='font-medium truncate'>
-                                    {slot.member.user.first_name} {slot.member.user.last_name}
-                                  </Typography>
-                                  <Typography variant='caption' color='text.secondary' className='truncate block'>
-                                    {slot.member.user.email}
-                                  </Typography>
-                                </div>
-                              </div>
-                              <TextField
-                                fullWidth
-                                size='small'
-                                type='number'
-                                label='Amount'
-                                value={slot.amount}
-                                onChange={e => handleUpdateSlotAmount(slot.slotNumber, e.target.value)}
-                                InputProps={{
-                                  startAdornment: <InputAdornment position='start'>₦</InputAdornment>
-                                }}
-                              />
                             </div>
-                          ) : (
-                            <Typography variant='body2' color='text.secondary' className='text-center py-3'>
-                              Empty Slot
-                            </Typography>
-                          )}
-                        </Card>
-                      </Grid>
+                          ))}
+                        </div>
+                      </Card>
                     ))}
-                  </Grid>
+                  </div>
                 </div>
 
               </div>
-            )}
+            )
+            }
 
             {/* Additional Details Section */}
             <div>
@@ -1784,18 +1842,18 @@ console.log(res.data)
                 </Grid>
               </Grid>
             </div>
-          </div>
-        </DialogContent>
+          </div >
+        </DialogContent >
         <DialogActions>
           <Button onClick={() => setCreateCycleOpen(false)}>Cancel</Button>
           <Button variant='contained' onClick={handleCreateCycle} size='large'>
             Create Cycle
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog >
 
       {/* Kick Member Dialog */}
-      <Dialog open={kickMemberOpen} onClose={() => setKickMemberOpen(false)}>
+      < Dialog open={kickMemberOpen} onClose={() => setKickMemberOpen(false)}>
         <DialogTitle>Remove Member</DialogTitle>
         <DialogContent>
           <Typography>
@@ -1812,10 +1870,10 @@ console.log(res.data)
             Remove
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog >
 
       {/* Make Admin Dialog */}
-      <Dialog open={makeAdminOpen} onClose={() => setMakeAdminOpen(false)}>
+      < Dialog open={makeAdminOpen} onClose={() => setMakeAdminOpen(false)}>
         <DialogTitle>Make Admin</DialogTitle>
         <DialogContent>
           <Typography>
@@ -1832,7 +1890,7 @@ console.log(res.data)
             Make Admin
           </Button>
         </DialogActions>
-      </Dialog>
-    </div>
+      </Dialog >
+    </div >
   )
 }
