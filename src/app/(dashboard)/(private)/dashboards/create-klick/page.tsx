@@ -190,43 +190,7 @@ export default function CreateKlick() {
                 </Button>
               </div>
             </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <div className='flex flex-col gap-4'>
-                <Card variant='outlined' className='p-4 bg-background-paper/50'>
-                  <div className='flex items-center gap-3 mb-2'>
-                    <i className='ri-group-line text-2xl text-primary' />
-                    <Typography variant='body2' className='font-semibold'>
-                      Community Building
-                    </Typography>
-                  </div>
-                  <Typography variant='body2' color='text.secondary'>
-                    Bring people together for shared financial goals
-                  </Typography>
-                </Card>
-                <Card variant='outlined' className='p-4 bg-background-paper/50'>
-                  <div className='flex items-center gap-3 mb-2'>
-                    <i className='ri-shield-check-line text-2xl text-success' />
-                    <Typography variant='body2' className='font-semibold'>
-                      Secure & Trusted
-                    </Typography>
-                  </div>
-                  <Typography variant='body2' color='text.secondary'>
-                    Safe and reliable contribution management
-                  </Typography>
-                </Card>
-                <Card variant='outlined' className='p-4 bg-background-paper/50'>
-                  <div className='flex items-center gap-3 mb-2'>
-                    <i className='ri-time-line text-2xl text-info' />
-                    <Typography variant='body2' className='font-semibold'>
-                      Quick Setup
-                    </Typography>
-                  </div>
-                  <Typography variant='body2' color='text.secondary'>
-                    Get started in less than 2 minutes
-                  </Typography>
-                </Card>
-              </div>
-            </Grid>
+        
           </Grid>
         </CardContent>
       </Card>
@@ -402,26 +366,7 @@ export default function CreateKlick() {
                 Creating a Klick is simple! Just provide a name, add your WhatsApp group link, and optionally include an
                 announcement. Once created, you'll receive an invite link to share with members.
               </Typography>
-              <div className='flex flex-wrap gap-2'>
-                <Chip
-                  icon={<i className='ri-lightbulb-line' />}
-                  label='Tip: Use a clear, descriptive name'
-                  size='small'
-                  variant='outlined'
-                />
-                <Chip
-                  icon={<i className='ri-link' />}
-                  label='WhatsApp link is required'
-                  size='small'
-                  variant='outlined'
-                />
-                <Chip
-                  icon={<i className='ri-megaphone-line' />}
-                  label='Announcement is optional'
-                  size='small'
-                  variant='outlined'
-                />
-              </div>
+           
             </div>
           </div>
         </CardContent>

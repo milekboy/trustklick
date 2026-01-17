@@ -168,10 +168,7 @@ export default function KlickList() {
           </Typography>
         )
       }),
-      columnHelper.accessor('member_count', {
-        header: 'Members',
-        cell: ({ row }) => <Chip label={`${row.original.member_count || 0} members`} size='small' variant='outlined' />
-      }),
+     
       columnHelper.accessor('invite_url', {
         header: 'Invite Link',
         cell: ({ row }) => (
@@ -198,26 +195,7 @@ export default function KlickList() {
             >
               View
             </Button>
-            <OptionMenu
-              iconButtonProps={{ size: 'small' }}
-              iconClassName='text-textSecondary'
-              options={[
-                {
-                  text: 'View Details',
-                  icon: 'ri-eye-line',
-                  menuItemProps: {
-                    onClick: () => router.push(`/dashboards/view-klicks/${row.original.id}`)
-                  }
-                },
-                {
-                  text: 'Copy Invite Link',
-                  icon: 'ri-file-copy-line',
-                  menuItemProps: {
-                    onClick: () => copyToClipboard(row.original.invite_url, row.original.id)
-                  }
-                }
-              ]}
-            />
+         
           </div>
         ),
         enableSorting: false

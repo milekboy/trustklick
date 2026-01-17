@@ -52,27 +52,46 @@ import { getInitials } from '@/utils/getInitials'
 
 type MemberType = {
   id: number
+  user_id: number
+  klick_id: number
+  type: string
+  status: string
+  approved_by: number | null
+  deactivated: boolean
+  is_admin: boolean
+  created_at: string | null
+  updated_at: string | null
   user: {
     id: number
     first_name: string
     last_name: string
     email: string
+    plan?: string
+    phone?: string
     image?: string
   }
-  is_admin: boolean
 }
 
 type JoinRequestType = {
   id: number
+  user_id: number
+  klick_id: number
+  type: string
+  status: string
+  approved_by: number | null
+  deactivated: boolean
+  is_admin: boolean
+  created_at: string | null
+  updated_at: string | null
   user: {
     id: number
     first_name: string
     last_name: string
     email: string
+    plan?: string
+    phone?: string
     image?: string
   }
-  status: string
-  created_at: string
 }
 
 type CycleType = {
@@ -102,95 +121,6 @@ type CycleType = {
   expected_end_date: string | null
 }
 
-// Dummy data for testing
-const DUMMY_MEMBERS: MemberType[] = [
-  {
-    id: 1,
-    user: {
-      id: 1,
-      first_name: 'John',
-      last_name: 'Doe',
-      email: 'john.doe@example.com'
-    },
-    is_admin: true
-  },
-  {
-    id: 2,
-    user: {
-      id: 2,
-      first_name: 'Jane',
-      last_name: 'Smith',
-      email: 'jane.smith@example.com'
-    },
-    is_admin: false
-  },
-  {
-    id: 3,
-    user: {
-      id: 3,
-      first_name: 'Michael',
-      last_name: 'Johnson',
-      email: 'michael.j@example.com'
-    },
-    is_admin: false
-  },
-  {
-    id: 4,
-    user: {
-      id: 4,
-      first_name: 'Sarah',
-      last_name: 'Williams',
-      email: 'sarah.w@example.com'
-    },
-    is_admin: false
-  },
-  {
-    id: 5,
-    user: {
-      id: 5,
-      first_name: 'David',
-      last_name: 'Brown',
-      email: 'david.brown@example.com'
-    },
-    is_admin: false
-  }
-]
-
-const DUMMY_JOIN_REQUESTS: JoinRequestType[] = [
-  {
-    id: 1,
-    user: {
-      id: 6,
-      first_name: 'Emily',
-      last_name: 'Davis',
-      email: 'emily.davis@example.com'
-    },
-    status: 'pending',
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: 2,
-    user: {
-      id: 7,
-      first_name: 'Robert',
-      last_name: 'Miller',
-      email: 'robert.m@example.com'
-    },
-    status: 'pending',
-    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: 3,
-    user: {
-      id: 8,
-      first_name: 'Lisa',
-      last_name: 'Anderson',
-      email: 'lisa.a@example.com'
-    },
-    status: 'pending',
-    created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString()
-  }
-]
 
 export default function SingleKlickPage() {
   const params = useParams()
@@ -207,7 +137,6 @@ export default function SingleKlickPage() {
   const [activeTab, setActiveTab] = useState('overview')
   const [copied, setCopied] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [useDummyData, setUseDummyData] = useState(true) // Toggle for dummy data
 
   // Dialog states
   const [createCycleOpen, setCreateCycleOpen] = useState(false)
@@ -302,61 +231,38 @@ export default function SingleKlickPage() {
     }
   }, [id, token])
 
-  // Fetch Members
+  // Fetch Members and Join Requests
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        if (useDummyData) {
-          setMembers(DUMMY_MEMBERS)
-          return
-        }
         const res = await api.get(`/klicks/${id}/members`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
         })
-        setMembers(res.data.data || [])
+        
+        const allMembers = res.data.data || []
+        
+        // Separate approved and non-approved members
+        const approvedMembers = allMembers.filter((member: MemberType) => 
+          member.status === 'approved' && !member.deactivated
+        )
+        const pendingMembers = allMembers.filter((member: MemberType) => 
+          member.status !== 'approved' || member.deactivated
+        )
+        
+        setMembers(approvedMembers)
+        setJoinRequests(pendingMembers)
       } catch (error) {
         console.error('Error fetching members:', error)
-        if (useDummyData) {
-          setMembers(DUMMY_MEMBERS)
-        }
+        setToast({ message: 'Failed to load members', type: 'error' })
       }
     }
 
     if (token && id) {
       fetchMembers()
     }
-  }, [id, token, useDummyData])
-
-  // Fetch Join Requests
-  useEffect(() => {
-    const fetchJoinRequests = async () => {
-      if (!isAdmin) return
-
-      try {
-        if (useDummyData) {
-          setJoinRequests(DUMMY_JOIN_REQUESTS)
-          return
-        }
-        const res = await api.get(`/klicks/${id}/join-requests`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        })
-        setJoinRequests(res.data.data || [])
-      } catch (error) {
-        console.error('Error fetching join requests:', error)
-        if (useDummyData) {
-          setJoinRequests(DUMMY_JOIN_REQUESTS)
-        }
-      }
-    }
-
-    if (token && id && isAdmin) {
-      fetchJoinRequests()
-    }
-  }, [id, token, isAdmin, useDummyData])
+  }, [id, token])
 
   // Fetch Cycles
   useEffect(() => {
@@ -557,26 +463,18 @@ export default function SingleKlickPage() {
     }
   }
 
-  // Kick Member
+  // Deactivate Member
   const handleKickMember = async () => {
     if (!selectedMember) return
 
     try {
-      if (useDummyData) {
-        setMembers(prev => prev.filter(m => m.id !== selectedMember.id))
-        setToast({ message: 'Member removed successfully', type: 'success' })
-        setKickMemberOpen(false)
-        setSelectedMember(null)
-        return
-      }
-
-      const res = await api.delete(`/klicks/${id}/members/${selectedMember.id}`, {
+      const res = await api.post(`/klicks/${id}/members/${selectedMember.id}/deactivate`, {}, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       })
 
-      setToast({ message: res.data.message || 'Member removed successfully', type: 'success' })
+      setToast({ message: res.data.message || 'Member deactivated successfully', type: 'success' })
       setKickMemberOpen(false)
       setSelectedMember(null)
 
@@ -586,10 +484,20 @@ export default function SingleKlickPage() {
           Authorization: `Bearer ${token}`
         }
       })
-      setMembers(membersRes.data.data || [])
+      
+      const allMembers = membersRes.data.data || []
+      const approvedMembers = allMembers.filter((member: MemberType) => 
+        member.status === 'approved' && !member.deactivated
+      )
+      const pendingMembers = allMembers.filter((member: MemberType) => 
+        member.status !== 'approved' || member.deactivated
+      )
+      
+      setMembers(approvedMembers)
+      setJoinRequests(pendingMembers)
     } catch (error: any) {
       setToast({
-        message: error?.response?.data?.message || 'Failed to remove member',
+        message: error?.response?.data?.message || 'Failed to deactivate member',
         type: 'error'
       })
     }
@@ -600,23 +508,11 @@ export default function SingleKlickPage() {
     if (!selectedMember) return
 
     try {
-      if (useDummyData) {
-        setMembers(prev => prev.map(m => (m.id === selectedMember.id ? { ...m, is_admin: true } : m)))
-        setToast({ message: 'Member promoted to admin', type: 'success' })
-        setMakeAdminOpen(false)
-        setSelectedMember(null)
-        return
-      }
-
-      const res = await api.patch(
-        `/klicks/${id}/members/${selectedMember.id}/make-admin`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+      const res = await api.post(`/klicks/${id}/members/${selectedMember.id}/admin`, {}, {
+        headers: {
+          Authorization: `Bearer ${token}`
         }
-      )
+      })
 
       setToast({ message: res.data.message || 'Member promoted to admin', type: 'success' })
       setMakeAdminOpen(false)
@@ -628,7 +524,17 @@ export default function SingleKlickPage() {
           Authorization: `Bearer ${token}`
         }
       })
-      setMembers(membersRes.data.data || [])
+      
+      const allMembers = membersRes.data.data || []
+      const approvedMembers = allMembers.filter((member: MemberType) => 
+        member.status === 'approved' && !member.deactivated
+      )
+      const pendingMembers = allMembers.filter((member: MemberType) => 
+        member.status !== 'approved' || member.deactivated
+      )
+      
+      setMembers(approvedMembers)
+      setJoinRequests(pendingMembers)
     } catch (error: any) {
       setToast({
         message: error?.response?.data?.message || 'Failed to promote member',
@@ -640,83 +546,60 @@ export default function SingleKlickPage() {
   // Approve Join Request
   const handleApproveRequest = async (requestId: number) => {
     try {
-      if (useDummyData) {
-        const request = joinRequests.find(r => r.id === requestId)
-        if (request) {
-          setMembers(prev => [
-            ...prev,
-            {
-              id: request.user.id,
-              user: request.user,
-              is_admin: false
-            }
-          ])
-          setJoinRequests(prev => prev.filter(r => r.id !== requestId))
-          setToast({ message: 'Join request approved', type: 'success' })
+      const res = await api.post(`/klicks/${id}/members/${requestId}/approve`, {}, {
+        headers: {
+          Authorization: `Bearer ${token}`
         }
-        return
-      }
+      })
 
-      const res = await api.patch(
-        `/klicks/${id}/join-requests/${requestId}/approve`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+      setToast({ message: res.data.message || 'Member approved successfully', type: 'success' })
+
+      // Refresh members
+      const membersRes = await api.get(`/klicks/${id}/members`, {
+        headers: {
+          Authorization: `Bearer ${token}`
         }
+      })
+      
+      const allMembers = membersRes.data.data || []
+      const approvedMembers = allMembers.filter((member: MemberType) => 
+        member.status === 'approved' && !member.deactivated
       )
-
-      setToast({ message: res.data.message || 'Join request approved', type: 'success' })
-
-      // Refresh data
-      const [membersRes, requestsRes] = await Promise.all([
-        api.get(`/klicks/${id}/members`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        api.get(`/klicks/${id}/join-requests`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-      ])
-
-      setMembers(membersRes.data.data || [])
-      setJoinRequests(requestsRes.data.data || [])
+      const pendingMembers = allMembers.filter((member: MemberType) => 
+        member.status !== 'approved' || member.deactivated
+      )
+      
+      setMembers(approvedMembers)
+      setJoinRequests(pendingMembers)
     } catch (error: any) {
       setToast({
-        message: error?.response?.data?.message || 'Failed to approve request',
+        message: error?.response?.data?.message || 'Failed to approve member',
         type: 'error'
       })
     }
   }
 
-  // Decline Join Request
+  // Decline Join Request (Remove from pending list)
   const handleDeclineRequest = async (requestId: number) => {
     try {
-      if (useDummyData) {
-        setJoinRequests(prev => prev.filter(r => r.id !== requestId))
-        setToast({ message: 'Join request declined', type: 'success' })
-        return
-      }
-
-      const res = await api.patch(
-        `/klicks/${id}/join-requests/${requestId}/decline`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      )
-
-      setToast({ message: res.data.message || 'Join request declined', type: 'success' })
-
-      // Refresh requests
-      const requestsRes = await api.get(`/klicks/${id}/join-requests`, {
+      // Refresh members to ensure consistency
+      const membersRes = await api.get(`/klicks/${id}/members`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       })
-      setJoinRequests(requestsRes.data.data || [])
+      
+      const allMembers = membersRes.data.data || []
+      const approvedMembers = allMembers.filter((member: MemberType) => 
+        member.status === 'approved' && !member.deactivated
+      )
+      const pendingMembers = allMembers.filter((member: MemberType) => 
+        member.status !== 'approved' || member.deactivated
+      )
+      
+      setMembers(approvedMembers)
+      setJoinRequests(pendingMembers)
+      setToast({ message: 'Request removed', type: 'success' })
     } catch (error: any) {
       setToast({
         message: error?.response?.data?.message || 'Failed to decline request',
@@ -1111,11 +994,7 @@ export default function SingleKlickPage() {
                 <Typography variant='h6' className='font-semibold'>
                   Members ({members.length})
                 </Typography>
-                {isAdmin && (
-                  <Button variant='outlined' size='small' startIcon={<i className='ri-user-add-line' />}>
-                    Invite Member
-                  </Button>
-                )}
+             
               </div>
 
               {members.length === 0 ? (
@@ -1178,54 +1057,8 @@ export default function SingleKlickPage() {
                                   </Tooltip>
                                 </>
                               )}
-                              <OptionMenu
-                                iconButtonProps={{ size: 'small' }}
-                                iconClassName='text-textSecondary'
-                                options={[
-                                  {
-                                    text: 'View Profile',
-                                    icon: 'ri-user-line',
-                                    menuItemProps: {
-                                      onClick: () => {
-                                        // Navigate to user profile
-                                      }
-                                    }
-                                  },
-                                  {
-                                    text: 'Send Message',
-                                    icon: 'ri-message-line',
-                                    menuItemProps: {
-                                      onClick: () => {
-                                        // Open message dialog
-                                      }
-                                    }
-                                  },
-                                  ...(isAdmin && !member.is_admin
-                                    ? [
-                                      {
-                                        text: 'Remove Member',
-                                        icon: 'ri-user-unfollow-line',
-                                        menuItemProps: {
-                                          onClick: () => {
-                                            setSelectedMember(member)
-                                            setKickMemberOpen(true)
-                                          }
-                                        }
-                                      },
-                                      {
-                                        text: 'Make Admin',
-                                        icon: 'ri-vip-crown-line',
-                                        menuItemProps: {
-                                          onClick: () => {
-                                            setSelectedMember(member)
-                                            setMakeAdminOpen(true)
-                                          }
-                                        }
-                                      }
-                                    ]
-                                    : [])
-                                ]}
-                              />
+                             
+                              
                             </div>
                           </ListItemSecondaryAction>
                         </ListItem>
@@ -1283,6 +1116,7 @@ export default function SingleKlickPage() {
                                 </Typography>
                                 <Typography variant='caption' color='text.secondary'>
                                   {(() => {
+                                    if (!request.created_at) return 'Requested recently'
                                     const now = new Date()
                                     const requested = new Date(request.created_at)
                                     const diffMs = now.getTime() - requested.getTime()

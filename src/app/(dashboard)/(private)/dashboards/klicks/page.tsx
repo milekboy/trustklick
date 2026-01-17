@@ -147,14 +147,7 @@ export default function Klicks() {
                 >
                   Join Klick
                 </Button>
-                <Button
-                  variant='outlined'
-                  size='large'
-                  onClick={() => router.refresh()}
-                  startIcon={<i className='ri-refresh-line' />}
-                >
-                  Refresh
-                </Button>
+             
               </div>
             </div>
           </div>
