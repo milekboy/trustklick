@@ -46,6 +46,7 @@ import InputLabel from '@mui/material/InputLabel'
 import CustomTabList from '@core/components/mui/TabList'
 import CustomAvatar from '@core/components/mui/Avatar'
 import OptionMenu from '@core/components/option-menu'
+import ProductTypeSelectionModal from '@/components/ProductTypeSelectionModal'
 
 // Util Imports
 import { getInitials } from '@/utils/getInitials'
@@ -121,6 +122,13 @@ type CycleType = {
   expected_end_date: string | null
 }
 
+type Country = {
+  name: string
+  code: string
+  flagUrl: string
+  cca2: string
+}
+
 
 export default function SingleKlickPage() {
   const params = useParams()
@@ -139,10 +147,12 @@ export default function SingleKlickPage() {
   const [isAdmin, setIsAdmin] = useState(false)
 
   // Dialog states
+  const [productTypeSelectionOpen, setProductTypeSelectionOpen] = useState(false)
   const [createCycleOpen, setCreateCycleOpen] = useState(false)
   const [kickMemberOpen, setKickMemberOpen] = useState(false)
   const [selectedMember, setSelectedMember] = useState<MemberType | null>(null)
   const [makeAdminOpen, setMakeAdminOpen] = useState(false)
+  const [selectedProductType, setSelectedProductType] = useState<'thrift' | 'contribution' | 'investment' | ''>('')
 
   // Form states
   const [cycleForm, setCycleForm] = useState({
@@ -174,11 +184,51 @@ export default function SingleKlickPage() {
   const [memberSearch, setMemberSearch] = useState('')
 
   const [inviteEmail, setInviteEmail] = useState('')
+  const [invitePhone, setInvitePhone] = useState('')
+  const [countryCode, setCountryCode] = useState('+234')
+  const [countries, setCountries] = useState<Country[]>([])
+  const [loadingCountries, setLoadingCountries] = useState(true)
+  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null)
 
   const [toast, setToast] = useState({
     message: '',
     type: ''
   })
+
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const response = await fetch('https://restcountries.com/v3.1/all?fields=name,idd,flags,cca2')
+        const data = await response.json()
+
+        const formattedCountries: Country[] = data
+          .map((country: any) => {
+            const countryCode = country.idd.root && country.idd.suffixes ? `${country.idd.root}${country.idd.suffixes[0]}` : ''
+            return {
+              name: country.name.common,
+              code: countryCode,
+              flagUrl: country.flags.svg,
+              cca2: country.cca2
+            }
+          })
+          .filter((country: Country) => country.code) // Filter out countries without a valid calling code
+          .sort((a: Country, b: Country) => a.name.localeCompare(b.name)) // Sort alphabetically
+
+        setCountries(formattedCountries)
+        // Set initial selected country based on default countryCode
+        const defaultCountry = formattedCountries.find(c => c.code === '+234')
+        if (defaultCountry) {
+          setSelectedCountry(defaultCountry)
+        }
+      } catch (error) {
+        console.error('Error fetching countries:', error)
+      } finally {
+        setLoadingCountries(false)
+      }
+    }
+
+    fetchCountries()
+  }, [])
 
   // Initialize slots when total_slot changes
   useEffect(() => {
@@ -240,17 +290,17 @@ export default function SingleKlickPage() {
             Authorization: `Bearer ${token}`
           }
         })
-        
+
         const allMembers = res.data.data || []
-        
+
         // Separate approved and non-approved members
-        const approvedMembers = allMembers.filter((member: MemberType) => 
+        const approvedMembers = allMembers.filter((member: MemberType) =>
           member.status === 'approved' && !member.deactivated
         )
-        const pendingMembers = allMembers.filter((member: MemberType) => 
+        const pendingMembers = allMembers.filter((member: MemberType) =>
           member.status !== 'approved' || member.deactivated
         )
-        
+
         setMembers(approvedMembers)
         setJoinRequests(pendingMembers)
       } catch (error) {
@@ -429,6 +479,7 @@ export default function SingleKlickPage() {
       console.log(res.data)
       setToast({ message: res.data.message || 'Cycle created successfully!', type: 'success' })
       setCreateCycleOpen(false)
+      setSelectedProductType('')
       // Reset form
       setCycleForm({
         cycle_name: '',
@@ -484,15 +535,15 @@ export default function SingleKlickPage() {
           Authorization: `Bearer ${token}`
         }
       })
-      
+
       const allMembers = membersRes.data.data || []
-      const approvedMembers = allMembers.filter((member: MemberType) => 
+      const approvedMembers = allMembers.filter((member: MemberType) =>
         member.status === 'approved' && !member.deactivated
       )
-      const pendingMembers = allMembers.filter((member: MemberType) => 
+      const pendingMembers = allMembers.filter((member: MemberType) =>
         member.status !== 'approved' || member.deactivated
       )
-      
+
       setMembers(approvedMembers)
       setJoinRequests(pendingMembers)
     } catch (error: any) {
@@ -524,15 +575,15 @@ export default function SingleKlickPage() {
           Authorization: `Bearer ${token}`
         }
       })
-      
+
       const allMembers = membersRes.data.data || []
-      const approvedMembers = allMembers.filter((member: MemberType) => 
+      const approvedMembers = allMembers.filter((member: MemberType) =>
         member.status === 'approved' && !member.deactivated
       )
-      const pendingMembers = allMembers.filter((member: MemberType) => 
+      const pendingMembers = allMembers.filter((member: MemberType) =>
         member.status !== 'approved' || member.deactivated
       )
-      
+
       setMembers(approvedMembers)
       setJoinRequests(pendingMembers)
     } catch (error: any) {
@@ -560,15 +611,15 @@ export default function SingleKlickPage() {
           Authorization: `Bearer ${token}`
         }
       })
-      
+
       const allMembers = membersRes.data.data || []
-      const approvedMembers = allMembers.filter((member: MemberType) => 
+      const approvedMembers = allMembers.filter((member: MemberType) =>
         member.status === 'approved' && !member.deactivated
       )
-      const pendingMembers = allMembers.filter((member: MemberType) => 
+      const pendingMembers = allMembers.filter((member: MemberType) =>
         member.status !== 'approved' || member.deactivated
       )
-      
+
       setMembers(approvedMembers)
       setJoinRequests(pendingMembers)
     } catch (error: any) {
@@ -588,15 +639,15 @@ export default function SingleKlickPage() {
           Authorization: `Bearer ${token}`
         }
       })
-      
+
       const allMembers = membersRes.data.data || []
-      const approvedMembers = allMembers.filter((member: MemberType) => 
+      const approvedMembers = allMembers.filter((member: MemberType) =>
         member.status === 'approved' && !member.deactivated
       )
-      const pendingMembers = allMembers.filter((member: MemberType) => 
+      const pendingMembers = allMembers.filter((member: MemberType) =>
         member.status !== 'approved' || member.deactivated
       )
-      
+
       setMembers(approvedMembers)
       setJoinRequests(pendingMembers)
       setToast({ message: 'Request removed', type: 'success' })
@@ -614,6 +665,23 @@ export default function SingleKlickPage() {
     console.log('Inviting:', inviteEmail)
     setToast({ message: `Invite sent to ${inviteEmail}`, type: 'success' })
     setInviteEmail('')
+  }
+
+  const handleProductTypeSelect = (productType: 'thrift' | 'contribution' | 'investment') => {
+    setSelectedProductType(productType)
+    setCycleForm({
+      ...cycleForm,
+      product_type: productType,
+      payment_frequency: productType === 'contribution' ? 'one-off' : 'monthly'
+    })
+    setCreateCycleOpen(true)
+  }
+
+  const handleInviteByPhone = () => {
+    if (!invitePhone) return
+    console.log('Inviting by phone:', { phone: invitePhone, countryCode })
+    setToast({ message: `Invite sent to ${countryCode}${invitePhone}`, type: 'success' })
+    setInvitePhone('')
   }
 
   if (loading) {
@@ -681,7 +749,26 @@ export default function SingleKlickPage() {
 
           {/* Announcement Alert */}
           {klick.announcement ? (
-            <Alert severity='info' icon={<i className='ri-megaphone-line' />} className='mt-4'>
+            <Alert
+              severity='info'
+              icon={<i className='ri-megaphone-line' />}
+              className='mt-4'
+              action={
+                isAdmin ? (
+                  <IconButton
+                    size='small'
+                    color='inherit'
+                    onClick={() => {
+                      // TODO: Add edit announcement handler when endpoint is ready
+                      console.log('Edit announcement clicked')
+                    }}
+                    title='Edit Announcement'
+                  >
+                    <i className='ri-edit-line' />
+                  </IconButton>
+                ) : null
+              }
+            >
               <AlertTitle className='font-semibold'>Announcement</AlertTitle>
               {klick.announcement}
             </Alert>
@@ -704,12 +791,6 @@ export default function SingleKlickPage() {
                 value='members'
                 label={`Members (${members.length})`}
                 icon={<i className='ri-group-line' />}
-                iconPosition='start'
-              />
-              <Tab
-                value='join-requests'
-                label={`Join Requests (${joinRequests.length})`}
-                icon={<i className='ri-user-add-line' />}
                 iconPosition='start'
               />
               <Tab
@@ -805,23 +886,15 @@ export default function SingleKlickPage() {
               <Divider />
 
               {/* Active Cycles Section */}
-              {cycles.length > 0 && (
+              {cycles.filter(c => c.status === 'running').length > 0 && (
                 <div>
                   <div className='flex items-center justify-between mb-4'>
                     <Typography variant='h6' className='font-semibold'>
                       Active Cycles
                     </Typography>
-                    <Button
-                      variant='text'
-                      size='small'
-                      onClick={() => setActiveTab('cycles')}
-                      endIcon={<i className='ri-arrow-right-line' />}
-                    >
-                      View All
-                    </Button>
                   </div>
                   <Grid container spacing={3} className='mb-6'>
-                    {cycles.slice(0, 3).map(cycle => (
+                    {cycles.filter(c => c.status === 'running').slice(0, 3).map(cycle => (
                       <Grid size={{ xs: 12, md: 6, lg: 4 }} key={cycle.id}>
                         <Card variant='outlined' className='p-4 hover:shadow-lg transition-shadow'>
                           <div className='flex items-start justify-between mb-3'>
@@ -994,7 +1067,7 @@ export default function SingleKlickPage() {
                 <Typography variant='h6' className='font-semibold'>
                   Members ({members.length})
                 </Typography>
-             
+
               </div>
 
               {members.length === 0 ? (
@@ -1057,8 +1130,8 @@ export default function SingleKlickPage() {
                                   </Tooltip>
                                 </>
                               )}
-                             
-                              
+
+
                             </div>
                           </ListItemSecondaryAction>
                         </ListItem>
@@ -1179,8 +1252,7 @@ export default function SingleKlickPage() {
                   <Button
                     variant='contained'
                     onClick={() => {
-                      // Placeholder for now - will open dialog later
-                      setCreateCycleOpen(true)
+                      setProductTypeSelectionOpen(true)
                     }}
                     startIcon={<i className='ri-add-line' />}
                   >
@@ -1204,7 +1276,7 @@ export default function SingleKlickPage() {
                       <Button
                         variant='contained'
                         size='large'
-                        onClick={() => setCreateCycleOpen(true)}
+                        onClick={() => setProductTypeSelectionOpen(true)}
                         startIcon={<i className='ri-play-circle-line' />}
                       >
                         Start Your First Cycle
@@ -1345,6 +1417,13 @@ export default function SingleKlickPage() {
         </TabContext>
       </Card>
 
+      {/* Product Type Selection Modal */}
+      <ProductTypeSelectionModal
+        open={productTypeSelectionOpen}
+        onClose={() => setProductTypeSelectionOpen(false)}
+        onSelectProductType={handleProductTypeSelect}
+      />
+
       {/* Create Cycle Dialog */}
       <Dialog
         open={createCycleOpen}
@@ -1356,9 +1435,29 @@ export default function SingleKlickPage() {
         }}
       >
         <DialogTitle>
-          <Typography variant='h5' className='font-bold'>
-            Create New Cycle
-          </Typography>
+          <div className='flex items-center justify-between'>
+            <Typography variant='h5' className='font-bold'>
+              Create New Cycle
+            </Typography>
+            {selectedProductType && (
+              <Chip
+                label={`${selectedProductType.charAt(0).toUpperCase() + selectedProductType.slice(1)} Cycle`}
+                color={selectedProductType === 'thrift' ? 'primary' : selectedProductType === 'contribution' ? 'success' : 'secondary'}
+                variant='filled'
+                size='medium'
+                sx={{ fontWeight: 'bold' }}
+              />
+            )}
+          </div>
+          {selectedProductType && (
+            <Typography variant='body2' color='text.secondary' className='mt-2'>
+              {selectedProductType === 'thrift'
+                ? 'Rotatory savings where each member shares in different collection periods'
+                : selectedProductType === 'contribution'
+                  ? 'One-off contribution for special occasions or support'
+                  : 'Joint business venture with potential dividends'}
+            </Typography>
+          )}
         </DialogTitle>
         <DialogContent dividers>
           <div className='space-y-6'>
@@ -1378,30 +1477,26 @@ export default function SingleKlickPage() {
                     required
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    fullWidth
-                    label='Product Type'
-                    placeholder='e.g., thrift'
-                    value={cycleForm.product_type}
-                    onChange={e => setCycleForm({ ...cycleForm, product_type: e.target.value })}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormControl fullWidth>
-                    <InputLabel>Payment Frequency</InputLabel>
-                    <Select
-                      value={cycleForm.payment_frequency}
-                      label='Payment Frequency'
-                      onChange={e => setCycleForm({ ...cycleForm, payment_frequency: e.target.value })}
-                    >
-                      <MenuItem value='daily'>Daily</MenuItem>
-                      <MenuItem value='weekly'>Weekly</MenuItem>
-                      <MenuItem value='monthly'>Monthly</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
+                {/* Payment Frequency - Hidden for Contribution */}
+                {selectedProductType !== 'contribution' && (
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <FormControl fullWidth>
+                      <InputLabel>Payment Frequency</InputLabel>
+                      <Select
+                        value={cycleForm.payment_frequency}
+                        label='Payment Frequency'
+                        onChange={e => setCycleForm({ ...cycleForm, payment_frequency: e.target.value })}
+                      >
+                        <MenuItem value='daily'>Daily</MenuItem>
+                        <MenuItem value='bi-weekly'>Bi-weekly</MenuItem>
+                        <MenuItem value='weekly'>Weekly</MenuItem>
+                        <MenuItem value='monthly'>Monthly</MenuItem>
+                        <MenuItem value='yearly'>Yearly</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                )}
+                <Grid size={{ xs: 12, sm: selectedProductType === 'contribution' ? 12 : 6 }}>
                   <TextField
                     fullWidth
                     type='number'
@@ -1418,10 +1513,116 @@ export default function SingleKlickPage() {
             {/* Participant Selection Section - Shows when total_slot > 0 */}
             {participantSlots.length > 0 && (
               <div>
+                <Divider className='my-4' />
+                <Typography variant='h6' className='font-semibold mb-4'>
+                  Currency & Participants
+                </Typography>
+                <Grid container spacing={3} className='mb-4'>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <FormControl fullWidth>
+                      <InputLabel>Currency</InputLabel>
+                      <Select
+                        value={cycleForm.currency}
+                        label='Currency'
+                        onChange={e => setCycleForm({ ...cycleForm, currency: e.target.value })}
+                      >
+                        <MenuItem value='NGN'>NGN (₦)</MenuItem>
+                        <MenuItem value='USD'>USD ($)</MenuItem>
+                        <MenuItem value='GBP'>GBP (£)</MenuItem>
+                        <MenuItem value='EUR'>EUR (€)</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+
                 <div className='mt-6 mb-2'>
                   <Typography variant='subtitle1' className='font-semibold mb-3'>
                     Assign Participants to Slots
                   </Typography>
+
+                  {/* Phone Invitation Section */}
+                  <Card variant='outlined' className='p-4 mb-4 bg-blue-50'>
+                    <Typography variant='subtitle2' className='font-semibold mb-3 flex items-center gap-2'>
+                      <i className='ri-phone-line text-blue-600' />
+                      Invite by Phone Number
+                    </Typography>
+                    <div className='flex gap-2 items-start'>
+                      <FormControl size='small' sx={{ minWidth: 140 }}>
+                        <InputLabel>Country</InputLabel>
+                        {loadingCountries ? (
+                          <div className='flex items-center justify-center p-2'>
+                            <CircularProgress size={20} />
+                          </div>
+                        ) : (
+                          <Select
+                            value={countryCode}
+                            label='Country'
+                            onChange={e => {
+                              setCountryCode(e.target.value)
+                              const country = countries.find(c => c.code === e.target.value)
+                              if (country) setSelectedCountry(country)
+                            }}
+                            renderValue={selected => (
+                              <div className='flex items-center gap-2'>
+                                {selectedCountry && (
+                                  <img
+                                    src={selectedCountry.flagUrl}
+                                    alt={selectedCountry.name}
+                                    width='20'
+                                    height='15'
+                                    style={{ objectFit: 'cover' }}
+                                  />
+                                )}
+                                <span>{selected}</span>
+                              </div>
+                            )}
+                            MenuProps={{
+                              PaperProps: {
+                                style: {
+                                  maxHeight: 300,
+                                  width: 250
+                                }
+                              }
+                            }}
+                          >
+                            {countries.map(country => (
+                              <MenuItem key={`${country.cca2}-${country.code}`} value={country.code}>
+                                <div className='flex items-center gap-2'>
+                                  <img
+                                    src={country.flagUrl}
+                                    alt={country.name}
+                                    width='20'
+                                    height='15'
+                                    style={{ objectFit: 'cover' }}
+                                  />
+                                  <span className='truncate'>{country.name}</span>
+                                  <span className='text-gray-500'>({country.code})</span>
+                                </div>
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        )}
+                      </FormControl>
+                      <TextField
+                        fullWidth
+                        size='small'
+                        type='tel'
+                        label='Phone Number'
+                        placeholder='8012345678'
+                        value={invitePhone}
+                        onChange={e => setInvitePhone(e.target.value)}
+                      />
+                      <Button
+                        variant='contained'
+                        onClick={handleInviteByPhone}
+                        disabled={!invitePhone}
+                        startIcon={<i className='ri-send-plane-fill' />}
+                        sx={{ minWidth: 100 }}
+                      >
+                        Invite
+                      </Button>
+                    </div>
+                  </Card>
 
                   {/* Search Bar for Members */}
                   <div className='mb-4 relative'>
@@ -1482,76 +1683,138 @@ export default function SingleKlickPage() {
                     )}
                   </div>
 
-                  {/* Slot List */}
-                  <div className='space-y-4 max-h-[400px] overflow-y-auto pr-2'>
-                    {participantSlots.map(slot => (
-                      <Card key={slot.slotNumber} variant='outlined' className='p-3 bg-gray-50'>
-                        <div className='flex items-center justify-between mb-2'>
-                          <Typography variant='subtitle2' className='font-bold text-gray-700'>
-                            Slot {slot.slotNumber}
-                          </Typography>
-                          <Button
-                            size="small"
-                            startIcon={<i className="ri-add-line" />}
-                            onClick={() => handleAddAllocationToSlot(slot.slotNumber)}
+                  {/* Slot Grid - 2 per row */}
+                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto pr-2'>
+                    {participantSlots.map(slot => {
+                      const hasMembers = slot.allocations.some(a => a.member !== null)
+                      return (
+                        <Card
+                          key={slot.slotNumber}
+                          variant='outlined'
+                          className={`p-4 transition-all duration-300 ${hasMembers
+                            ? 'bg-gradient-to-br from-green-50 to-green-100 border-green-400 shadow-md'
+                            : 'bg-gray-50 border-gray-300 hover:border-gray-400'
+                            }`}
+                          sx={{
+                            minHeight: '200px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            position: 'relative',
+                            overflow: 'hidden'
+                          }}
+                        >
+                          {/* Slot number badge */}
+                          <div
+                            className={`absolute top-0 right-0 w-16 h-16 flex items-center justify-center ${hasMembers ? 'bg-green-500' : 'bg-gray-400'
+                              }`}
+                            style={{
+                              clipPath: 'polygon(100% 0, 0 0, 100% 100%)'
+                            }}
                           >
-                            Add Person
-                          </Button>
-                        </div>
+                            <Typography
+                              variant='caption'
+                              className='font-bold text-white absolute top-2 right-2'
+                            >
+                              #{slot.slotNumber}
+                            </Typography>
+                          </div>
 
-                        <div className="space-y-2">
-                          {slot.allocations.map((allocation, allocIndex) => (
-                            <div key={allocation.id} className='flex items-center gap-3 bg-white p-2 rounded border border-gray-200'>
-                              <div className='flex-1'>
-                                <FormControl fullWidth size='small'>
-                                  <InputLabel>Member</InputLabel>
-                                  <Select
-                                    value={allocation.member ? allocation.member.id : ''}
-                                    label='Member'
-                                    onChange={e => {
-                                      const member = members.find(m => m.id === e.target.value)
-                                      handleUpdateAllocationMember(slot.slotNumber, allocation.id, member || null)
-                                    }}
-                                  >
-                                    <MenuItem value=''>
-                                      <em>Select Member</em>
-                                    </MenuItem>
-                                    {members.map(member => (
-                                      <MenuItem
-                                        key={member.id}
-                                        value={member.id}
-                                        disabled={isMemberSelected(member.user.id) && member.user.id !== allocation.member?.user.id}
-                                      >
-                                        {member.user.first_name} {member.user.last_name}
-                                      </MenuItem>
-                                    ))}
-                                  </Select>
-                                </FormControl>
-                              </div>
-                              <div className='w-[140px]'>
-                                <TextField
-                                  size='small'
-                                  label='Amount'
-                                  // placeholder={cycleForm.saving_amount}
-                                  value={allocation.amount}
-                                  onChange={e => handleUpdateAllocationAmount(slot.slotNumber, allocation.id, e.target.value)}
-                                  InputProps={{
-                                    startAdornment: <InputAdornment position='start'>{cycleForm.currency}</InputAdornment>
-                                  }}
-                                />
-                              </div>
-                              <IconButton
-                                size='small'
-                                color='error'
-                                onClick={() => handleRemoveAllocation(slot.slotNumber, allocation.id)}
-                              >
-                                <i className='ri-close-line' />
-                              </IconButton>
+                          {/* Filled indicator icon */}
+                          {hasMembers && (
+                            <div className='absolute top-3 left-3'>
+                              <i className='ri-checkbox-circle-fill text-2xl text-green-600' />
                             </div>
-                          ))}
-                        </div>
-                      </Card>
-                    ))}
+                          )}
+
+                          <div className='flex items-center justify-between mb-3 mt-6'>
+                            <Typography variant='subtitle2' className='font-bold text-gray-700'>
+                              Slot {slot.slotNumber}
+                            </Typography>
+                            <Button
+                              size='small'
+                              startIcon={<i className='ri-add-line' />}
+                              onClick={() => handleAddAllocationToSlot(slot.slotNumber)}
+                              variant='text'
+                            >
+                              Add Person
+                            </Button>
+                          </div>
+
+                          <div className='space-y-2 flex-1'>
+                            {slot.allocations.map((allocation, allocIndex) => (
+                              <div
+                                key={allocation.id}
+                                className='flex items-start gap-2 bg-white p-3 rounded-lg border border-gray-200 shadow-sm'
+                              >
+                                <div className='flex-1 min-w-0'>
+                                  <FormControl fullWidth size='small'>
+                                    <InputLabel>Member</InputLabel>
+                                    <Select
+                                      value={allocation.member ? allocation.member.id : ''}
+                                      label='Member'
+                                      onChange={e => {
+                                        const member = members.find(m => m.id === e.target.value)
+                                        handleUpdateAllocationMember(slot.slotNumber, allocation.id, member || null)
+                                      }}
+                                    >
+                                      <MenuItem value=''>
+                                        <em>Select Member</em>
+                                      </MenuItem>
+                                      {members.map(member => (
+                                        <MenuItem
+                                          key={member.id}
+                                          value={member.id}
+                                          disabled={
+                                            isMemberSelected(member.user.id) &&
+                                            member.user.id !== allocation.member?.user.id
+                                          }
+                                        >
+                                          {member.user.first_name} {member.user.last_name}
+                                        </MenuItem>
+                                      ))}
+                                    </Select>
+                                  </FormControl>
+                                  <TextField
+                                    size='small'
+                                    label='Amount'
+                                    value={allocation.amount}
+                                    onChange={e =>
+                                      handleUpdateAllocationAmount(slot.slotNumber, allocation.id, e.target.value)
+                                    }
+                                    InputProps={{
+                                      startAdornment: (
+                                        <InputAdornment position='start'>{cycleForm.currency}</InputAdornment>
+                                      )
+                                    }}
+                                    className='mt-2'
+                                    fullWidth
+                                  />
+                                </div>
+                                {slot.allocations.length > 1 && (
+                                  <IconButton
+                                    size='small'
+                                    color='error'
+                                    onClick={() => handleRemoveAllocation(slot.slotNumber, allocation.id)}
+                                    className='mt-1'
+                                  >
+                                    <i className='ri-close-line' />
+                                  </IconButton>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Summary */}
+                          {hasMembers && (
+                            <div className='mt-3 pt-3 border-t border-gray-300'>
+                              <Typography variant='caption' color='text.secondary'>
+                                {slot.allocations.filter(a => a.member).length} member(s) assigned
+                              </Typography>
+                            </div>
+                          )}
+                        </Card>
+                      )
+                    })}
                   </div>
                 </div>
 
@@ -1566,38 +1829,26 @@ export default function SingleKlickPage() {
                 Additional Details
               </Typography>
               <Grid container spacing={3}>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormControl fullWidth>
-                    <InputLabel>Currency</InputLabel>
-                    <Select
-                      value={cycleForm.currency}
-                      label='Currency'
-                      onChange={e => setCycleForm({ ...cycleForm, currency: e.target.value })}
-                    >
-                      <MenuItem value='NGN'>NGN (₦)</MenuItem>
-                      <MenuItem value='USD'>USD ($)</MenuItem>
-                      <MenuItem value='GBP'>GBP (£)</MenuItem>
-                      <MenuItem value='EUR'>EUR (€)</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    fullWidth
-                    type='number'
-                    label='Minimum Amount'
-                    value={cycleForm.min_amount}
-                    onChange={e => setCycleForm({ ...cycleForm, min_amount: e.target.value })}
-                    InputProps={{
-                      startAdornment: <InputAdornment position='start'>₦</InputAdornment>
-                    }}
-                  />
-                </Grid>
+                {/* Minimum Amount - Hidden for Thrift */}
+                {selectedProductType !== 'thrift' && (
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      fullWidth
+                      type='number'
+                      label={selectedProductType === 'contribution' ? 'Target Amount (Optional)' : 'Minimum Amount'}
+                      value={cycleForm.min_amount}
+                      onChange={e => setCycleForm({ ...cycleForm, min_amount: e.target.value })}
+                      InputProps={{
+                        startAdornment: <InputAdornment position='start'>₦</InputAdornment>
+                      }}
+                    />
+                  </Grid>
+                )}
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
                     type='number'
-                    label='Saving Amount'
+                    label={selectedProductType === 'investment' ? 'Target Amount' : selectedProductType === 'contribution' ? 'Overall Amount Aiming to Save' : 'Saving Amount (slot amount per frequency)'}
                     value={cycleForm.saving_amount}
                     onChange={e => setCycleForm({ ...cycleForm, saving_amount: e.target.value })}
                     InputProps={{
@@ -1650,19 +1901,22 @@ export default function SingleKlickPage() {
                     onChange={e => setCycleForm({ ...cycleForm, invite_ref: e.target.value })}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormControl fullWidth>
-                    <InputLabel>Disbursement Structure</InputLabel>
-                    <Select
-                      value={cycleForm.disbursement_structure}
-                      label='Disbursement Structure'
-                      onChange={e => setCycleForm({ ...cycleForm, disbursement_structure: e.target.value })}
-                    >
-                      <MenuItem value='individual'>Individual</MenuItem>
-                      <MenuItem value='group'>Group</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
+                {/* Disbursement Structure - Hidden for Contribution */}
+                {selectedProductType !== 'contribution' && (
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <FormControl fullWidth>
+                      <InputLabel>Disbursement Structure</InputLabel>
+                      <Select
+                        value={cycleForm.disbursement_structure}
+                        label='Disbursement Structure'
+                        onChange={e => setCycleForm({ ...cycleForm, disbursement_structure: e.target.value })}
+                      >
+                        <MenuItem value='individual'>Individual</MenuItem>
+                        <MenuItem value='central'>Central</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                )}
                 <Grid size={{ xs: 12 }}>
                   <TextField
                     fullWidth
