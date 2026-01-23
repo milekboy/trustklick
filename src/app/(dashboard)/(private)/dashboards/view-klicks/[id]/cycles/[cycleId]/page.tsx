@@ -37,6 +37,7 @@ import DialogActions from '@mui/material/DialogActions'
 import CustomAvatar from '@core/components/mui/Avatar'
 import { getInitials } from '@/utils/getInitials'
 import IconButton from '@mui/material/IconButton'
+import TextField from '@mui/material/TextField'
 
 // Icons
 import Icon from '@mui/material/Icon' // Fallback if specific icons needed, but using class names mostly
@@ -153,7 +154,7 @@ export default function ViewCyclePage() {
     const api = NetworkInstance()
 
     const [loading, setLoading] = useState(true)
-    const [activeTab, setActiveTab] = useState('schedule') // Default to schedule as requested
+    const [activeTab, setActiveTab] = useState('description') // Default to schedule as requested
     const [schedules, setSchedules] = useState<ScheduleType[]>([])
     const [klick, setKlick] = useState<KlickType | null>(null)
     const [cycle, setCycle] = useState<CycleType | null>(null)
@@ -182,6 +183,11 @@ export default function ViewCyclePage() {
         message: '',
         type: ''
     })
+
+    // Edit Cycle Announcement State
+    const [editCycleAnnouncementOpen, setEditCycleAnnouncementOpen] = useState(false)
+    const [cycleAnnouncementText, setCycleAnnouncementText] = useState('')
+    const [isUpdatingCycleAnnouncement, setIsUpdatingCycleAnnouncement] = useState(false)
 
     // Fetch Data
     useEffect(() => {
@@ -445,6 +451,36 @@ export default function ViewCyclePage() {
         setDeleteDialogOpen(true)
     }
 
+    // Edit Cycle Announcement Handlers
+    const handleOpenEditCycleAnnouncement = () => {
+        setCycleAnnouncementText(cycle?.announcement || '')
+        setEditCycleAnnouncementOpen(true)
+    }
+
+    const handleUpdateCycleAnnouncement = async () => {
+        setIsUpdatingCycleAnnouncement(true)
+        try {
+            const res = await api.patch(`/cycles/${cycleId}/announcement`, {
+                announcement: cycleAnnouncementText
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+
+            setToast({ message: res.data.message || 'Announcement updated successfully', type: 'success' })
+            setCycle((prev: any) => ({ ...prev, announcement: cycleAnnouncementText }))
+            setEditCycleAnnouncementOpen(false)
+        } catch (error: any) {
+            setToast({
+                message: error?.response?.data?.message || 'Failed to update announcement',
+                type: 'error'
+            })
+        } finally {
+            setIsUpdatingCycleAnnouncement(false)
+        }
+    }
+
     // Active Schedule Helpers
     const activeSchedule = schedules.find(s => s.is_active)
     const isActiveScheduleRecipient = activeSchedule ? isUserRecipient(activeSchedule.id) : false
@@ -500,8 +536,9 @@ export default function ViewCyclePage() {
                 <TabContext value={activeTab}>
                     <div className='border-b'>
                         <CustomTabList onChange={handleTabChange} variant='scrollable' scrollButtons='auto'>
-                            <Tab value='participants' label='Participants' icon={<i className='ri-group-line' />} iconPosition='start' />
                             <Tab value='description' label='Description' icon={<i className='ri-file-text-line' />} iconPosition='start' />
+                            <Tab value='participants' label='Participants' icon={<i className='ri-group-line' />} iconPosition='start' />
+
                             <Tab value='schedule' label='Schedule' icon={<i className='ri-calendar-line' />} iconPosition='start' />
                         </CustomTabList>
                     </div>
@@ -599,8 +636,8 @@ export default function ViewCyclePage() {
                                                                         participant.status === 'approved'
                                                                             ? 'success'
                                                                             : participant.status === 'pending'
-                                                                              ? 'warning'
-                                                                              : 'default'
+                                                                                ? 'warning'
+                                                                                : 'default'
                                                                     }
                                                                     variant="outlined"
                                                                 />
@@ -678,20 +715,197 @@ export default function ViewCyclePage() {
                                     Cycle Description
                                 </Typography>
                                 {cycle?.announcement ? (
-                                    <Card variant="outlined" className="p-6">
-                                        <Typography variant="body1" className="whitespace-pre-wrap">
+                                    <Alert
+                                        severity='info'
+                                        icon={<i className='ri-megaphone-line' />}
+                                        action={
+                                            <IconButton
+                                                size='small'
+                                                color='inherit'
+                                                onClick={handleOpenEditCycleAnnouncement}
+                                                title='Edit Announcement'
+                                            >
+                                                <i className='ri-edit-line' />
+                                            </IconButton>
+                                        }
+                                    >
+                                        <AlertTitle className='font-semibold'>Announcement</AlertTitle>
+                                        <Typography variant="body2" className="whitespace-pre-wrap">
                                             {cycle.announcement}
                                         </Typography>
-                                    </Card>
+                                    </Alert>
                                 ) : (
-                                    <Card variant="outlined" className="p-8 text-center">
-                                        <i className="ri-file-text-line text-5xl text-textSecondary mb-4" />
-                                        <Typography variant="h6" color="text.secondary" className="mb-2">
-                                            No description available
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            This cycle doesn't have a description or announcement yet.
-                                        </Typography>
+                                    <Alert
+                                        severity='info'
+                                        icon={<i className='ri-information-line' />}
+                                        action={
+                                            <IconButton
+                                                size='small'
+                                                color='inherit'
+                                                onClick={handleOpenEditCycleAnnouncement}
+                                                title='Edit Announcement'
+                                            >
+                                                <i className='ri-edit-line' />
+                                            </IconButton>
+                                        }
+                                    >
+                                        <AlertTitle className='font-semibold'>No Announcement</AlertTitle>
+                                        This cycle doesn't have a description or announcement yet. Click edit to add one.
+                                    </Alert>
+                                )}
+
+                                {/* Active Schedule Action Section - Moved from Schedule Tab */}
+                                {activeSchedule && (
+                                    <Card variant="outlined" className='mb-6 bg-primary-50 border-primary'>
+                                        <CardHeader
+                                            title="Current Active Schedule"
+                                            subheader={`Slot ${activeSchedule.slot} • ${new Date(activeSchedule.period_start).toLocaleDateString()} - ${new Date(activeSchedule.period_end).toLocaleDateString()}`}
+                                            avatar={<i className="ri-timer-flash-line text-2xl text-primary" />}
+                                        />
+                                        <CardContent>
+                                            <Grid container spacing={4}>
+                                                <Grid size={{ xs: 12, md: 8 }}>
+                                                    <Typography variant="body1" className='mb-2'>
+                                                        <strong>Expected Amount:</strong> {activeSchedule.expected_amount}
+                                                    </Typography>
+
+                                                    {/* Show Recipient Info */}
+                                                    {activeScheduleRecipients.length > 0 && (
+                                                        <Box className="mt-4 mb-4">
+                                                            <Typography variant="body2" className="font-semibold mb-2">
+                                                                Recipient{activeScheduleRecipients.length > 1 ? 's' : ''}:
+                                                            </Typography>
+                                                            <div className="flex flex-wrap gap-3 mb-3">
+                                                                {activeScheduleRecipients.map((recipient, idx) => (
+                                                                    <Chip
+                                                                        key={idx}
+                                                                        avatar={
+                                                                            <CustomAvatar skin="light" color="primary" size={24}>
+                                                                                {getInitials(`${recipient.user.first_name} ${recipient.user.last_name}`)}
+                                                                            </CustomAvatar>
+                                                                        }
+                                                                        label={`${recipient.user.first_name} ${recipient.user.last_name}`}
+                                                                        variant="outlined"
+                                                                        size="small"
+                                                                    />
+                                                                ))}
+                                                            </div>
+                                                            {activeScheduleRecipients.map((recipient, idx) => (
+                                                                <Box key={idx} className="mb-2 p-2 bg-gray-50 rounded">
+                                                                    <Typography variant="caption" color="text.secondary">
+                                                                        Account:
+                                                                    </Typography>
+                                                                    <Typography variant="body2" className="font-medium">
+                                                                        {recipient.account ? JSON.stringify(recipient.account) : 'Not set'}
+                                                                    </Typography>
+                                                                </Box>
+                                                            ))}
+                                                        </Box>
+                                                    )}
+
+                                                    {/* Show different message based on user role */}
+                                                    {isActiveScheduleRecipient && (
+                                                        <Alert severity="info" className="mt-3">
+                                                            <AlertTitle>You are the recipient</AlertTitle>
+                                                            Please confirm when you receive payments from contributors.
+                                                        </Alert>
+                                                    )}
+                                                    {isActiveSchedulePayer && !isActiveScheduleRecipient && (
+                                                        <Typography variant="body2" color="text.secondary" className="mt-2">
+                                                            Please upload your payment evidence for this period to verify your contribution.
+                                                        </Typography>
+                                                    )}
+                                                </Grid>
+                                                <Grid size={{ xs: 12, md: 4 }}>
+                                                    {isActiveScheduleRecipient ? (
+                                                        // Show Confirm Payment section for recipients
+                                                        <Box className="flex flex-col gap-3">
+                                                            {(() => {
+                                                                const allUnpaidInvoices = scheduleInvoices[activeSchedule.id]?.invoices
+                                                                    .filter(inv => inv.status === 'not_paid') || []
+                                                                const unpaidInvoicesForUser = allUnpaidInvoices
+                                                                    .filter(inv => inv.recipient.email === user?.email) || []
+
+                                                                if (unpaidInvoicesForUser.length === 0) {
+                                                                    return (
+                                                                        <Alert severity="success">
+                                                                            All your payments confirmed
+                                                                        </Alert>
+                                                                    )
+                                                                }
+
+                                                                return (
+                                                                    <Box className="space-y-3">
+                                                                        {unpaidInvoicesForUser.length > 0 && allUnpaidInvoices.length > unpaidInvoicesForUser.length && (
+                                                                            <Alert severity="info">
+                                                                                <Typography variant="caption">
+                                                                                    You can only confirm payments where you are the recipient.
+                                                                                    {allUnpaidInvoices.length - unpaidInvoicesForUser.length} other payment{allUnpaidInvoices.length - unpaidInvoicesForUser.length > 1 ? 's' : ''} {allUnpaidInvoices.length - unpaidInvoicesForUser.length > 1 ? 'are' : 'is'} pending for other recipients.
+                                                                                </Typography>
+                                                                            </Alert>
+                                                                        )}
+                                                                        {unpaidInvoicesForUser.map((invoice) => (
+                                                                            <Card key={invoice.id} variant="outlined" className="p-3">
+                                                                                <Box className="space-y-2">
+                                                                                    <Typography variant="body2" className="font-semibold">
+                                                                                        Payment from {invoice.user.first_name} {invoice.user.last_name}
+                                                                                    </Typography>
+                                                                                    <Typography variant="h6" className="font-bold text-primary">
+                                                                                        {invoice.amount}
+                                                                                    </Typography>
+                                                                                    <Divider />
+                                                                                    <LoadingButton
+                                                                                        variant="contained"
+                                                                                        color="success"
+                                                                                        fullWidth
+                                                                                        size="small"
+                                                                                        onClick={() => openConfirmDialog(invoice)}
+                                                                                        startIcon={<i className="ri-check-line" />}
+                                                                                    >
+                                                                                        Mark as Paid
+                                                                                    </LoadingButton>
+                                                                                </Box>
+                                                                            </Card>
+                                                                        ))}
+                                                                    </Box>
+                                                                )
+                                                            })()}
+                                                        </Box>
+                                                    ) : isActiveSchedulePayer ? (
+                                                        // Show Upload Evidence for payers
+                                                        <div className="flex flex-col gap-3">
+                                                            <input
+                                                                accept="application/pdf,image/*"
+                                                                style={{ display: 'none' }}
+                                                                id="raised-button-file"
+                                                                mask-type="String"
+                                                                type="file"
+                                                                onChange={handleFileChange}
+                                                            />
+                                                            <label htmlFor="raised-button-file">
+                                                                <Button variant="outlined" component="span" fullWidth startIcon={<i className="ri-upload-2-line" />}>
+                                                                    {file ? file.name : 'Select Evidence (PDF/Image)'}
+                                                                </Button>
+                                                            </label>
+                                                            <LoadingButton
+                                                                loading={uploading}
+                                                                variant="contained"
+                                                                color="primary"
+                                                                fullWidth
+                                                                onClick={() => handleUploadEvidence(activeSchedule.id)}
+                                                                disabled={!file}
+                                                            >
+                                                                Upload Evidence
+                                                            </LoadingButton>
+                                                        </div>
+                                                    ) : (
+                                                        <Alert severity="info" >
+                                                            You are not involved in this schedule
+                                                        </Alert>
+                                                    )}
+                                                </Grid>
+                                            </Grid>
+                                        </CardContent>
                                     </Card>
                                 )}
                             </div>
@@ -699,317 +913,165 @@ export default function ViewCyclePage() {
 
                         <TabPanel value='schedule' className='space-y-6 p-0'>
 
-                            {/* Active Schedule Action Section */}
-                            {activeSchedule && (
-                                <Card variant="outlined" className='mb-6 bg-primary-50 border-primary'>
-                                    <CardHeader
-                                        title="Current Active Schedule"
-                                        subheader={`Slot ${activeSchedule.slot} • ${new Date(activeSchedule.period_start).toLocaleDateString()} - ${new Date(activeSchedule.period_end).toLocaleDateString()}`}
-                                        avatar={<i className="ri-timer-flash-line text-2xl text-primary" />}
-                                    />
-                                    <CardContent>
-                                        <Grid container spacing={4}>
-                                            <Grid size={{ xs: 12, md: 8 }}>
-                                                <Typography variant="body1" className='mb-2'>
-                                                    <strong>Expected Amount:</strong> {activeSchedule.expected_amount}
-                                                </Typography>
+                            <TabPanel value='schedule' className='space-y-6 p-0'>
 
-                                                {/* Show Recipient Info */}
-                                                {activeScheduleRecipients.length > 0 && (
-                                                    <Box className="mt-4 mb-4">
-                                                        <Typography variant="body2" className="font-semibold mb-2">
-                                                            Recipient{activeScheduleRecipients.length > 1 ? 's' : ''}:
+                                {/* Schedule List */}
+                                <Typography variant="h6" className="mb-4 mt-4">All Schedules</Typography>
+
+                                {schedules.length === 0 ? (
+                                    <Typography color="text.secondary">No schedules found for this cycle.</Typography>
+                                ) : (
+                                    schedules.map((schedule) => {
+                                        const recipients = getScheduleRecipients(schedule.id)
+                                        const invoiceData = scheduleInvoices[schedule.id]
+                                        const isLoading = loadingInvoices[schedule.id]
+
+                                        return (
+                                            <Accordion
+                                                key={schedule.id}
+                                                defaultExpanded={false}
+                                                onChange={(_, expanded) => handleAccordionChange(schedule.id, expanded)}
+                                            >
+                                                <AccordionSummary expandIcon={<i className="ri-arrow-down-s-line" />}>
+                                                    <div className="flex items-center gap-4 w-full mr-4">
+                                                        <Typography className="font-semibold min-w-[80px]">
+                                                            Slot {schedule.slot}
                                                         </Typography>
-                                                        <div className="flex flex-wrap gap-3 mb-3">
-                                                            {activeScheduleRecipients.map((recipient, idx) => (
-                                                                <Chip
-                                                                    key={idx}
-                                                                    avatar={
-                                                                        <CustomAvatar skin="light" color="primary" size={24}>
-                                                                            {getInitials(`${recipient.user.first_name} ${recipient.user.last_name}`)}
-                                                                        </CustomAvatar>
-                                                                    }
-                                                                    label={`${recipient.user.first_name} ${recipient.user.last_name}`}
-                                                                    variant="outlined"
-                                                                    size="small"
-                                                                />
-                                                            ))}
+                                                        <div className="flex-1 flex flex-wrap gap-2 text-sm text-gray-600">
+                                                            <span>{new Date(schedule.period_start).toLocaleDateString()}</span>
+                                                            <span>-</span>
+                                                            <span>{new Date(schedule.period_end).toLocaleDateString()}</span>
                                                         </div>
-                                                        {activeScheduleRecipients.map((recipient, idx) => (
-                                                            <Box key={idx} className="mb-2 p-2 bg-gray-50 rounded">
-                                                                <Typography variant="caption" color="text.secondary">
-                                                                    Account:
-                                                                </Typography>
-                                                                <Typography variant="body2" className="font-medium">
-                                                                    {recipient.account ? JSON.stringify(recipient.account) : 'Not set'}
-                                                                </Typography>
-                                                            </Box>
-                                                        ))}
-                                                    </Box>
-                                                )}
-
-                                                {/* Show different message based on user role */}
-                                                {isActiveScheduleRecipient && (
-                                                    <Alert severity="info" className="mt-3">
-                                                        <AlertTitle>You are the recipient</AlertTitle>
-                                                        Please confirm when you receive payments from contributors.
-                                                    </Alert>
-                                                )}
-                                                {isActiveSchedulePayer && !isActiveScheduleRecipient && (
-                                                    <Typography variant="body2" color="text.secondary" className="mt-2">
-                                                        Please upload your payment evidence for this period to verify your contribution.
-                                                    </Typography>
-                                                )}
-                                            </Grid>
-                                            <Grid size={{ xs: 12, md: 4 }}>
-                                                {isActiveScheduleRecipient ? (
-                                                    // Show Confirm Payment section for recipients
-                                                    <Box className="flex flex-col gap-3">
-                                                        {(() => {
-                                                            const allUnpaidInvoices = scheduleInvoices[activeSchedule.id]?.invoices
-                                                                .filter(inv => inv.status === 'not_paid') || []
-                                                            const unpaidInvoicesForUser = allUnpaidInvoices
-                                                                .filter(inv => inv.recipient.email === user?.email) || []
-
-                                                            if (unpaidInvoicesForUser.length === 0) {
-                                                                return (
-                                                                    <Alert severity="success">
-                                                                        All your payments confirmed
-                                                                    </Alert>
-                                                                )
-                                                            }
-
-                                                            return (
-                                                                <Box className="space-y-3">
-                                                                    {unpaidInvoicesForUser.length > 0 && allUnpaidInvoices.length > unpaidInvoicesForUser.length && (
-                                                                        <Alert severity="info">
-                                                                            <Typography variant="caption">
-                                                                                You can only confirm payments where you are the recipient.
-                                                                                {allUnpaidInvoices.length - unpaidInvoicesForUser.length} other payment{allUnpaidInvoices.length - unpaidInvoicesForUser.length > 1 ? 's' : ''} {allUnpaidInvoices.length - unpaidInvoicesForUser.length > 1 ? 'are' : 'is'} pending for other recipients.
-                                                                            </Typography>
-                                                                        </Alert>
-                                                                    )}
-                                                                    {unpaidInvoicesForUser.map((invoice) => (
-                                                                        <Card key={invoice.id} variant="outlined" className="p-3">
-                                                                            <Box className="space-y-2">
-                                                                                <Typography variant="body2" className="font-semibold">
-                                                                                    Payment from {invoice.user.first_name} {invoice.user.last_name}
-                                                                                </Typography>
-                                                                                <Typography variant="h6" className="font-bold text-primary">
-                                                                                    {invoice.amount}
-                                                                                </Typography>
-                                                                                <Divider />
-                                                                                <LoadingButton
-                                                                                    variant="contained"
-                                                                                    color="success"
-                                                                                    fullWidth
-                                                                                    size="small"
-                                                                                    onClick={() => openConfirmDialog(invoice)}
-                                                                                    startIcon={<i className="ri-check-line" />}
-                                                                                >
-                                                                                    Mark as Paid
-                                                                                </LoadingButton>
-                                                                            </Box>
-                                                                        </Card>
-                                                                    ))}
-                                                                </Box>
-                                                            )
-                                                        })()}
-                                                    </Box>
-                                                ) : isActiveSchedulePayer ? (
-                                                    // Show Upload Evidence for payers
-                                                    <div className="flex flex-col gap-3">
-                                                        <input
-                                                            accept="application/pdf,image/*"
-                                                            style={{ display: 'none' }}
-                                                            id="raised-button-file"
-                                                            mask-type="String"
-                                                            type="file"
-                                                            onChange={handleFileChange}
-                                                        />
-                                                        <label htmlFor="raised-button-file">
-                                                            <Button variant="outlined" component="span" fullWidth startIcon={<i className="ri-upload-2-line" />}>
-                                                                {file ? file.name : 'Select Evidence (PDF/Image)'}
-                                                            </Button>
-                                                        </label>
-                                                        <LoadingButton
-                                                            loading={uploading}
-                                                            variant="contained"
-                                                            color="primary"
-                                                            fullWidth
-                                                            onClick={() => handleUploadEvidence(activeSchedule.id)}
-                                                            disabled={!file}
-                                                        >
-                                                            Upload Evidence
-                                                        </LoadingButton>
-                                                    </div>
-                                                ) : (
-                                                    <Alert severity="info" >
-                                                        You are not involved in this schedule
-                                                    </Alert>
-                                                )}
-                                            </Grid>
-                                        </Grid>
-                                    </CardContent>
-                                </Card>
-                            )}
-
-                            {/* Schedule List */}
-                            <Typography variant="h6" className="mb-4 mt-4">All Schedules</Typography>
-
-                            {schedules.length === 0 ? (
-                                <Typography color="text.secondary">No schedules found for this cycle.</Typography>
-                            ) : (
-                                schedules.map((schedule) => {
-                                    const recipients = getScheduleRecipients(schedule.id)
-                                    const invoiceData = scheduleInvoices[schedule.id]
-                                    const isLoading = loadingInvoices[schedule.id]
-
-                                    return (
-                                        <Accordion
-                                            key={schedule.id}
-                                            defaultExpanded={schedule.is_active}
-                                            onChange={(_, expanded) => handleAccordionChange(schedule.id, expanded)}
-                                        >
-                                            <AccordionSummary expandIcon={<i className="ri-arrow-down-s-line" />}>
-                                                <div className="flex items-center gap-4 w-full mr-4">
-                                                    <Typography className="font-semibold min-w-[80px]">
-                                                        Slot {schedule.slot}
-                                                    </Typography>
-                                                    <div className="flex-1 flex flex-wrap gap-2 text-sm text-gray-600">
-                                                        <span>{new Date(schedule.period_start).toLocaleDateString()}</span>
-                                                        <span>-</span>
-                                                        <span>{new Date(schedule.period_end).toLocaleDateString()}</span>
-                                                    </div>
-                                                    {recipients.length > 0 && (
-                                                        <Chip
-                                                            label={`Recipient: ${recipients[0].user.first_name} ${recipients[0].user.last_name}${recipients.length > 1 ? ` +${recipients.length - 1}` : ''}`}
-                                                            size="small"
-                                                            variant="outlined"
-                                                            color="info"
-                                                        />
-                                                    )}
-                                                    <Chip
-                                                        label={schedule.is_active ? 'Active' : schedule.completed ? 'Completed' : 'Pending'}
-                                                        color={schedule.is_active ? 'success' : schedule.completed ? 'default' : 'default'}
-                                                        size="small"
-                                                        variant={schedule.is_active ? 'filled' : 'outlined'}
-                                                    />
-                                                </div>
-                                            </AccordionSummary>
-                                            <AccordionDetails>
-                                                {isLoading ? (
-                                                    <Box className="flex justify-center py-4">
-                                                        <CircularProgress size={24} />
-                                                    </Box>
-                                                ) : (
-                                                    <Grid container spacing={3}>
-                                                        <Grid size={{ xs: 12 }}>
-                                                            <Divider className="mb-3" />
-                                                        </Grid>
-                                                        <Grid size={{ xs: 6, sm: 3 }}>
-                                                            <Typography variant="caption" color="text.secondary">Expected Amount</Typography>
-                                                            <Typography variant="body2" className="font-medium">{schedule.expected_amount}</Typography>
-                                                        </Grid>
-                                                        <Grid size={{ xs: 6, sm: 3 }}>
-                                                            <Typography variant="caption" color="text.secondary">Status</Typography>
-                                                            <Typography variant="body2" className="font-medium">
-                                                                {schedule.completed ? 'Completed' : 'Incomplete'}
-                                                            </Typography>
-                                                        </Grid>
-                                                        <Grid size={{ xs: 6, sm: 3 }}>
-                                                            <Typography variant="caption" color="text.secondary">Created At</Typography>
-                                                            <Typography variant="body2">{new Date(schedule.created_at).toLocaleDateString()}</Typography>
-                                                        </Grid>
-
-                                                        {/* Recipients Section */}
                                                         {recipients.length > 0 && (
-                                                            <>
-                                                                <Grid size={{ xs: 12 }}>
-                                                                    <Divider className="my-2" />
-                                                                    <Typography variant="subtitle2" className="font-semibold mb-2">
-                                                                        Recipient{recipients.length > 1 ? 's' : ''}:
-                                                                    </Typography>
-                                                                    <div className="flex flex-wrap gap-2 mb-2">
-                                                                        {recipients.map((recipient, idx) => (
-                                                                            <Chip
-                                                                                key={idx}
-                                                                                avatar={
-                                                                                    <CustomAvatar skin="light" color="primary" size={24}>
-                                                                                        {getInitials(`${recipient.user.first_name} ${recipient.user.last_name}`)}
-                                                                                    </CustomAvatar>
-                                                                                }
-                                                                                label={`${recipient.user.first_name} ${recipient.user.last_name}`}
-                                                                                variant="outlined"
-                                                                                size="small"
-                                                                            />
-                                                                        ))}
-                                                                    </div>
-                                                                    {recipients.map((recipient, idx) => (
-                                                                        <Box key={idx} className="mb-2 p-2 bg-gray-50 rounded">
-                                                                            <Typography variant="caption" color="text.secondary">
-                                                                                Account:
-                                                                            </Typography>
-                                                                            <Typography variant="body2" className="font-medium">
-                                                                                {recipient.account ? JSON.stringify(recipient.account) : 'Not set'}
-                                                                            </Typography>
-                                                                        </Box>
-                                                                    ))}
-                                                                </Grid>
-                                                            </>
+                                                            <Chip
+                                                                label={`Recipient: ${recipients[0].user.first_name} ${recipients[0].user.last_name}${recipients.length > 1 ? ` +${recipients.length - 1}` : ''}`}
+                                                                size="small"
+                                                                variant="outlined"
+                                                                color="info"
+                                                            />
                                                         )}
+                                                        <Chip
+                                                            label={schedule.is_active ? 'Active' : schedule.completed ? 'Completed' : 'Pending'}
+                                                            color={schedule.is_active ? 'success' : schedule.completed ? 'default' : 'default'}
+                                                            size="small"
+                                                            variant={schedule.is_active ? 'filled' : 'outlined'}
+                                                        />
+                                                    </div>
+                                                </AccordionSummary>
+                                                <AccordionDetails>
+                                                    {isLoading ? (
+                                                        <Box className="flex justify-center py-4">
+                                                            <CircularProgress size={24} />
+                                                        </Box>
+                                                    ) : (
+                                                        <Grid container spacing={3}>
+                                                            <Grid size={{ xs: 12 }}>
+                                                                <Divider className="mb-3" />
+                                                            </Grid>
+                                                            <Grid size={{ xs: 6, sm: 3 }}>
+                                                                <Typography variant="caption" color="text.secondary">Expected Amount</Typography>
+                                                                <Typography variant="body2" className="font-medium">{schedule.expected_amount}</Typography>
+                                                            </Grid>
+                                                            <Grid size={{ xs: 6, sm: 3 }}>
+                                                                <Typography variant="caption" color="text.secondary">Status</Typography>
+                                                                <Typography variant="body2" className="font-medium">
+                                                                    {schedule.completed ? 'Completed' : 'Incomplete'}
+                                                                </Typography>
+                                                            </Grid>
+                                                            <Grid size={{ xs: 6, sm: 3 }}>
+                                                                <Typography variant="caption" color="text.secondary">Created At</Typography>
+                                                                <Typography variant="body2">{new Date(schedule.created_at).toLocaleDateString()}</Typography>
+                                                            </Grid>
 
-                                                        {/* Invoices Summary */}
-                                                        {invoiceData && invoiceData.invoices.length > 0 && (
-                                                            <>
-                                                                <Grid size={{ xs: 12 }}>
-                                                                    <Divider className="my-2" />
-                                                                    <Typography variant="subtitle2" className="font-semibold mb-2">
-                                                                        Payment Summary:
-                                                                    </Typography>
-                                                                    <Box className="space-y-2">
-                                                                        {invoiceData.invoices.map((invoice) => (
-                                                                            <Box key={invoice.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                                                                                <div className="flex items-center gap-2">
-                                                                                    <CustomAvatar skin="light" color="secondary" size={32}>
-                                                                                        {getInitials(`${invoice.user.first_name} ${invoice.user.last_name}`)}
-                                                                                    </CustomAvatar>
-                                                                                    <div>
-                                                                                        <Typography variant="body2" className="font-medium">
-                                                                                            {invoice.user.first_name} {invoice.user.last_name}
-                                                                                        </Typography>
-                                                                                        <Typography variant="caption" color="text.secondary">
-                                                                                            → {invoice.recipient.first_name} {invoice.recipient.last_name}
-                                                                                        </Typography>
-                                                                                        <Typography variant="caption" color="text.secondary" className="block mt-1">
-                                                                                            Account: {invoice.account_id ? invoice.account_id : 'Not set'}
-                                                                                        </Typography>
-                                                                                    </div>
-                                                                                </div>
-                                                                                <div className="text-right">
-                                                                                    <Typography variant="body2" className="font-semibold">
-                                                                                        {invoice.amount}
-                                                                                    </Typography>
-                                                                                    <Chip
-                                                                                        label={invoice.status.replace('_', ' ')}
-                                                                                        size="small"
-                                                                                        color={invoice.status === 'paid' ? 'success' : 'default'}
-                                                                                        variant="outlined"
-                                                                                    />
-                                                                                </div>
+                                                            {/* Recipients Section */}
+                                                            {recipients.length > 0 && (
+                                                                <>
+                                                                    <Grid size={{ xs: 12 }}>
+                                                                        <Divider className="my-2" />
+                                                                        <Typography variant="subtitle2" className="font-semibold mb-2">
+                                                                            Recipient{recipients.length > 1 ? 's' : ''}:
+                                                                        </Typography>
+                                                                        <div className="flex flex-wrap gap-2 mb-2">
+                                                                            {recipients.map((recipient, idx) => (
+                                                                                <Chip
+                                                                                    key={idx}
+                                                                                    avatar={
+                                                                                        <CustomAvatar skin="light" color="primary" size={24}>
+                                                                                            {getInitials(`${recipient.user.first_name} ${recipient.user.last_name}`)}
+                                                                                        </CustomAvatar>
+                                                                                    }
+                                                                                    label={`${recipient.user.first_name} ${recipient.user.last_name}`}
+                                                                                    variant="outlined"
+                                                                                    size="small"
+                                                                                />
+                                                                            ))}
+                                                                        </div>
+                                                                        {recipients.map((recipient, idx) => (
+                                                                            <Box key={idx} className="mb-2 p-2 bg-gray-50 rounded">
+                                                                                <Typography variant="caption" color="text.secondary">
+                                                                                    Account:
+                                                                                </Typography>
+                                                                                <Typography variant="body2" className="font-medium">
+                                                                                    {recipient.account ? JSON.stringify(recipient.account) : 'Not set'}
+                                                                                </Typography>
                                                                             </Box>
                                                                         ))}
-                                                                    </Box>
-                                                                </Grid>
-                                                            </>
-                                                        )}
-                                                    </Grid>
-                                                )}
-                                            </AccordionDetails>
-                                        </Accordion>
-                                    )
-                                })
-                            )}
+                                                                    </Grid>
+                                                                </>
+                                                            )}
+
+                                                            {/* Invoices Summary */}
+                                                            {invoiceData && invoiceData.invoices.length > 0 && (
+                                                                <>
+                                                                    <Grid size={{ xs: 12 }}>
+                                                                        <Divider className="my-2" />
+                                                                        <Typography variant="subtitle2" className="font-semibold mb-2">
+                                                                            Payment Summary:
+                                                                        </Typography>
+                                                                        <Box className="space-y-2">
+                                                                            {invoiceData.invoices.map((invoice) => (
+                                                                                <Box key={invoice.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                                                                    <div className="flex items-center gap-2">
+                                                                                        <CustomAvatar skin="light" color="secondary" size={32}>
+                                                                                            {getInitials(`${invoice.user.first_name} ${invoice.user.last_name}`)}
+                                                                                        </CustomAvatar>
+                                                                                        <div>
+                                                                                            <Typography variant="body2" className="font-medium">
+                                                                                                {invoice.user.first_name} {invoice.user.last_name}
+                                                                                            </Typography>
+                                                                                            <Typography variant="caption" color="text.secondary">
+                                                                                                → {invoice.recipient.first_name} {invoice.recipient.last_name}
+                                                                                            </Typography>
+                                                                                            <Typography variant="caption" color="text.secondary" className="block mt-1">
+                                                                                                Account: {invoice.account_id ? invoice.account_id : 'Not set'}
+                                                                                            </Typography>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="text-right">
+                                                                                        <Typography variant="body2" className="font-semibold">
+                                                                                            {invoice.amount}
+                                                                                        </Typography>
+                                                                                        <Chip
+                                                                                            label={invoice.status.replace('_', ' ')}
+                                                                                            size="small"
+                                                                                            color={invoice.status === 'paid' ? 'success' : 'default'}
+                                                                                            variant="outlined"
+                                                                                        />
+                                                                                    </div>
+                                                                                </Box>
+                                                                            ))}
+                                                                        </Box>
+                                                                    </Grid>
+                                                                </>
+                                                            )}
+                                                        </Grid>
+                                                    )}
+                                                </AccordionDetails>
+                                            </Accordion>
+                                        )
+                                    })
+                                )}
+                            </TabPanel>
                         </TabPanel>
                     </CardContent>
                 </TabContext>
@@ -1156,6 +1218,34 @@ export default function ViewCyclePage() {
                     >
                         Remove Participant
                     </LoadingButton>
+                </DialogActions>
+            </Dialog>
+
+            {/* Edit Cycle Announcement Dialog */}
+            <Dialog open={editCycleAnnouncementOpen} onClose={() => setEditCycleAnnouncementOpen(false)} fullWidth maxWidth='sm'>
+                <DialogTitle>Edit Cycle Announcement</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        label="Announcement"
+                        type="text"
+                        fullWidth
+                        multiline
+                        rows={4}
+                        value={cycleAnnouncementText}
+                        onChange={(e) => setCycleAnnouncementText(e.target.value)}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setEditCycleAnnouncementOpen(false)}>Cancel</Button>
+                    <Button
+                        onClick={handleUpdateCycleAnnouncement}
+                        variant="contained"
+                        disabled={isUpdatingCycleAnnouncement}
+                    >
+                        {isUpdatingCycleAnnouncement ? <CircularProgress size={24} color="inherit" /> : 'Save'}
+                    </Button>
                 </DialogActions>
             </Dialog>
         </div>

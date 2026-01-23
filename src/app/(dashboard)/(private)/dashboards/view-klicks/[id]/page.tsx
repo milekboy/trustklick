@@ -195,6 +195,12 @@ export default function SingleKlickPage() {
     type: ''
   })
 
+  // Edit Announcement State
+  const [editAnnouncementOpen, setEditAnnouncementOpen] = useState(false)
+  const [announcementText, setAnnouncementText] = useState('')
+  const [isUpdatingAnnouncement, setIsUpdatingAnnouncement] = useState(false)
+  const [isInviting, setIsInviting] = useState(false)
+
   useEffect(() => {
     const fetchCountries = async () => {
       try {
@@ -659,12 +665,35 @@ export default function SingleKlickPage() {
     }
   }
 
-  const handleInviteMember = () => {
-    if (!inviteEmail) return
-    // Mock invite API call
-    console.log('Inviting:', inviteEmail)
-    setToast({ message: `Invite sent to ${inviteEmail}`, type: 'success' })
-    setInviteEmail('')
+  const handleInviteMember = async () => {
+    if (!inviteEmail && !invitePhone) {
+      setToast({ message: 'Please enter an email or phone number', type: 'error' })
+      return
+    }
+
+    setIsInviting(true)
+    try {
+      const payload: any = {}
+      if (inviteEmail) payload.email = inviteEmail
+      if (invitePhone) payload.phone = `${countryCode}${invitePhone}`
+
+      const res = await api.post(`/klicks/${id}/invite`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      setToast({ message: res.data.message || 'Invite sent successfully', type: 'success' })
+      setInviteEmail('')
+      setInvitePhone('')
+    } catch (error: any) {
+      setToast({
+        message: error?.response?.data?.message || 'Failed to send invite',
+        type: 'error'
+      })
+    } finally {
+      setIsInviting(false)
+    }
   }
 
   const handleProductTypeSelect = (productType: 'thrift' | 'contribution' | 'investment') => {
@@ -677,11 +706,81 @@ export default function SingleKlickPage() {
     setCreateCycleOpen(true)
   }
 
-  const handleInviteByPhone = () => {
-    if (!invitePhone) return
-    console.log('Inviting by phone:', { phone: invitePhone, countryCode })
-    setToast({ message: `Invite sent to ${countryCode}${invitePhone}`, type: 'success' })
-    setInvitePhone('')
+  const handleInviteByPhone = async () => {
+    if (!invitePhone) {
+      setToast({ message: 'Please enter a phone number', type: 'error' })
+      return
+    }
+
+    setIsInviting(true)
+    try {
+      const payload = {
+        phone: `${countryCode}${invitePhone}`
+      }
+
+      const res = await api.post(`/klicks/${id}/invite`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      setToast({ message: res.data.message || 'Invite sent successfully', type: 'success' })
+      setInvitePhone('')
+
+      // Refresh members
+      const membersRes = await api.get(`/klicks/${id}/members`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      const allMembers = membersRes.data.data || []
+      const approvedMembers = allMembers.filter((member: MemberType) =>
+        member.status === 'approved' && !member.deactivated
+      )
+      const pendingMembers = allMembers.filter((member: MemberType) =>
+        member.status !== 'approved' || member.deactivated
+      )
+
+      setMembers(approvedMembers)
+      setJoinRequests(pendingMembers)
+    } catch (error: any) {
+      setToast({
+        message: error?.response?.data?.message || 'Failed to send invite',
+        type: 'error'
+      })
+    } finally {
+      setIsInviting(false)
+    }
+  }
+
+  const handleOpenEditAnnouncement = () => {
+    setAnnouncementText(klick.announcement || '')
+    setEditAnnouncementOpen(true)
+  }
+
+  const handleUpdateAnnouncement = async () => {
+    setIsUpdatingAnnouncement(true)
+    try {
+      const res = await api.patch(`/klicks/${id}/announcement`, {
+        announcement: announcementText
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      setToast({ message: res.data.message || 'Announcement updated successfully', type: 'success' })
+      setKlick((prev: any) => ({ ...prev, announcement: announcementText }))
+      setEditAnnouncementOpen(false)
+    } catch (error: any) {
+      setToast({
+        message: error?.response?.data?.message || 'Failed to update announcement',
+        type: 'error'
+      })
+    } finally {
+      setIsUpdatingAnnouncement(false)
+    }
   }
 
   if (loading) {
@@ -758,10 +857,7 @@ export default function SingleKlickPage() {
                   <IconButton
                     size='small'
                     color='inherit'
-                    onClick={() => {
-                      // TODO: Add edit announcement handler when endpoint is ready
-                      console.log('Edit announcement clicked')
-                    }}
+                    onClick={handleOpenEditAnnouncement}
                     title='Edit Announcement'
                   >
                     <i className='ri-edit-line' />
@@ -1379,44 +1475,122 @@ export default function SingleKlickPage() {
 
             {/* Settings Tab */}
             {/* Invite Tab */}
+            {/* Invite Tab */}
             <TabPanel value='invite' className='space-y-4'>
               <Typography variant='h6' className='font-semibold mb-4'>
                 Invite New Member
               </Typography>
               <Card variant='outlined' className='p-6'>
-                <Grid container spacing={2} alignItems='center'>
-                  <Grid size={{ xs: 12, md: 8 }}>
-                    <Typography variant='body1' className='mb-4'>
-                      Send an invitation email to add a new member to this Klick.
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12 }}>
+                    <Typography variant='body1' className='mb-2'>
+                      Invite via Email or Phone Number (at least one is required)
                     </Typography>
-                    <div className='flex gap-3'>
+                  </Grid>
+
+                  {/* Email Input */}
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      fullWidth
+                      type='email'
+                      label='Email Address'
+                      placeholder='Enter email address'
+                      value={inviteEmail}
+                      onChange={e => setInviteEmail(e.target.value)}
+                      size='small'
+                    />
+                  </Grid>
+
+                  {/* Phone Input */}
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <div className='flex gap-2 items-start'>
+                      <FormControl size='small' sx={{ minWidth: 100 }}>
+                        <InputLabel>Country</InputLabel>
+                        {loadingCountries ? (
+                          <div className='flex items-center justify-center p-2'>
+                            <CircularProgress size={20} />
+                          </div>
+                        ) : (
+                          <Select
+                            value={countryCode}
+                            label='Country'
+                            onChange={e => {
+                              setCountryCode(e.target.value)
+                              const country = countries.find(c => c.code === e.target.value)
+                              if (country) setSelectedCountry(country)
+                            }}
+                            renderValue={selected => (
+                              <div className='flex items-center gap-2'>
+                                {selectedCountry && (
+                                  <img
+                                    src={selectedCountry.flagUrl}
+                                    alt={selectedCountry.name}
+                                    width='20'
+                                    height='15'
+                                    style={{ objectFit: 'cover' }}
+                                  />
+                                )}
+                                <span className='pe-5'>{selected}</span>
+                              </div>
+                            )}
+                            MenuProps={{
+                              PaperProps: {
+                                style: {
+                                  maxHeight: 300,
+                                  width: 250
+                                }
+                              }
+                            }}
+                          >
+                            {countries.map(country => (
+                              <MenuItem key={`${country.cca2}-${country.code}`} value={country.code}>
+                                <div className='flex items-center gap-2'>
+                                  <img
+                                    src={country.flagUrl}
+                                    alt={country.name}
+                                    width='20'
+                                    height='15'
+                                    style={{ objectFit: 'cover' }}
+                                  />
+                                  <span className='truncate'>{country.name}</span>
+                                  <span className='text-gray-500'>({country.code})</span>
+                                </div>
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        )}
+                      </FormControl>
                       <TextField
                         fullWidth
-                        type='email'
-                        label='Email Address'
-                        placeholder='Enter email address'
-                        value={inviteEmail}
-                        onChange={e => setInviteEmail(e.target.value)}
                         size='small'
+                        type='tel'
+                        label='Phone Number'
+                        placeholder='8012345678'
+                        value={invitePhone}
+                        onChange={e => setInvitePhone(e.target.value)}
                       />
-                      <Button
-                        variant='contained'
-                        onClick={handleInviteMember}
-                        startIcon={<i className='ri-send-plane-fill' />}
-                        disabled={!inviteEmail}
-                        sx={{ minWidth: 120 }}
-                      >
-                        Invite
-                      </Button>
                     </div>
+                  </Grid>
+
+                  <Grid size={{ xs: 12 }}>
+                    <Button
+                      variant='contained'
+                      onClick={handleInviteMember}
+                      startIcon={<i className='ri-send-plane-fill' />}
+                      disabled={(!inviteEmail && !invitePhone) || isInviting}
+                      sx={{ minWidth: 120 }}
+                    >
+                      {isInviting ? <CircularProgress size={24} color="inherit" /> : 'Send Invite'}
+                    </Button>
                   </Grid>
                 </Grid>
               </Card>
             </TabPanel>
-          </CardContent>
-        </TabContext>
-      </Card>
+          </CardContent >
+        </TabContext >
+      </Card >
 
+      {/* Product Type Selection Modal */}
       {/* Product Type Selection Modal */}
       <ProductTypeSelectionModal
         open={productTypeSelectionOpen}
@@ -1938,10 +2112,10 @@ export default function SingleKlickPage() {
             Create Cycle
           </Button>
         </DialogActions>
-      </Dialog >
+      </Dialog>
 
       {/* Kick Member Dialog */}
-      < Dialog open={kickMemberOpen} onClose={() => setKickMemberOpen(false)}>
+      <Dialog open={kickMemberOpen} onClose={() => setKickMemberOpen(false)}>
         <DialogTitle>Remove Member</DialogTitle>
         <DialogContent>
           <Typography>
@@ -1958,10 +2132,10 @@ export default function SingleKlickPage() {
             Remove
           </Button>
         </DialogActions>
-      </Dialog >
+      </Dialog>
 
       {/* Make Admin Dialog */}
-      < Dialog open={makeAdminOpen} onClose={() => setMakeAdminOpen(false)}>
+      <Dialog open={makeAdminOpen} onClose={() => setMakeAdminOpen(false)}>
         <DialogTitle>Make Admin</DialogTitle>
         <DialogContent>
           <Typography>
@@ -1978,7 +2152,35 @@ export default function SingleKlickPage() {
             Make Admin
           </Button>
         </DialogActions>
-      </Dialog >
+      </Dialog>
+
+      {/* Edit Announcement Dialog */}
+      <Dialog open={editAnnouncementOpen} onClose={() => setEditAnnouncementOpen(false)} fullWidth maxWidth='sm'>
+        <DialogTitle>Edit Announcement</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Announcement"
+            type="text"
+            fullWidth
+            multiline
+            rows={4}
+            value={announcementText}
+            onChange={(e) => setAnnouncementText(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditAnnouncementOpen(false)}>Cancel</Button>
+          <Button
+            onClick={handleUpdateAnnouncement}
+            variant="contained"
+            disabled={isUpdatingAnnouncement}
+          >
+            {isUpdatingAnnouncement ? <CircularProgress size={24} color="inherit" /> : 'Save'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div >
   )
 }
