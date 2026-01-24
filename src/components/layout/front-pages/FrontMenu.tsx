@@ -113,16 +113,7 @@ const FrontMenu = (props: Props) => {
       >
         Features
       </Typography>
-      <Typography
-        color='text.primary'
-        component={Link}
-        href='/front-pages/landing-page#team'
-        className={classnames('font-medium plb-3 pli-1.5 hover:text-primary', {
-          'text-primary': intersections.team
-        })}
-      >
-        Team
-      </Typography>
+
       <Typography
         color='text.primary'
         component={Link}
@@ -133,16 +124,7 @@ const FrontMenu = (props: Props) => {
       >
         FAQ
       </Typography>
-      <Typography
-        color='text.primary'
-        component={Link}
-        href='/front-pages/landing-page#contact-us'
-        className={classnames('font-medium plb-3 pli-1.5 hover:text-primary', {
-          'text-primary': intersections['contact-us']
-        })}
-      >
-        Contact us
-      </Typography>
+
       {isBelowLgScreen ? (
         <>
           <Typography
