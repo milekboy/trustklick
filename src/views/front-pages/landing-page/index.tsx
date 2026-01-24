@@ -11,7 +11,7 @@ import HeroSection from './HeroSection'
 import UsefulFeature from './UsefulFeature'
 import CustomerReviews from './CustomerReviews'
 import OurTeam from './OurTeam'
-import Pricing from './Pricing'
+import CycleTypes from './CycleTypes'
 import ProductStat from './ProductStat'
 import Faqs from './Faqs'
 import GetStarted from './GetStarted'
@@ -34,13 +34,12 @@ const LandingPageWrapper = ({ mode }: { mode: Mode }) => {
     <>
       <HeroSection mode={mode} />
       <UsefulFeature />
-      <CustomerReviews />
-      <OurTeam />
-      <Pricing />
+      <CycleTypes />
       <ProductStat />
+      {/* <CustomerReviews /> */}
       <Faqs />
       <GetStarted />
-      <ContactUs />
+
     </>
   )
 }

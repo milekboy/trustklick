@@ -31,28 +31,40 @@ type FaqsDataTypes = {
 const FaqsData: FaqsDataTypes[] = [
   {
     id: 'panel1',
-    question: 'Do you charge for each upgrade?',
+    question: 'What is Trustklick?',
     answer:
-      'Lemon drops chocolate cake gummies carrot cake chupa chups muffin topping. Sesame snaps icing marzipan gummi bears macaroon dragée danish caramels powder. Bear claw dragée pastry topping soufflé. Wafer gummi bears marshmallow pastry pie.'
+      'Trustklick is a platform for managing group savings, contributions, and investments. Whether you call it Esusu, Ajo, Rotating Savings, or a contribution pool – Trustklick helps you organize, track, and manage group finances transparently.'
   },
   {
     id: 'panel2',
-    question: 'What is regular license?',
+    question: 'What are the different cycle types?',
     active: true,
     answer:
-      'Regular license can be used for end products that do not charge users for access or service(access is free and there will be no monthly subscription fee). Single regular license can be used for single end product and end product can be used by you or your client. If you want to sell end product to multiple clients then you will need to purchase separate license for each client. The same rule applies if you want to use the same end product on multiple domains(unique setup). For more info on regular license you can check official description.'
+      'Trustklick offers three cycle types: 1) Thrift – rotating savings where members take turns collecting (like Esusu/Ajo); 2) Contribution – one-off collections for events like weddings or emergencies; 3) Investment – joint business ventures where members can own shares and receive dividends.'
   },
   {
     id: 'panel3',
-    question: 'What is extended license?',
+    question: 'Is Trustklick free to use?',
     answer:
-      'Lorem ipsum dolor sit amet consectetur adipisicing elit. Nobis et aliquid quaerat possimus maxime! Mollitia reprehenderit neque repellat deleniti delectus architecto dolorum maxime, blanditiis earum ea, incidunt quam possimus cumque.'
+      'Yes! Creating a Klick and managing your group is completely free. You can invite unlimited members, create multiple cycles, and access all core features at no cost. Premium features may be introduced in the future.'
   },
   {
     id: 'panel4',
-    question: 'Which license is applicable for SASS application?',
+    question: 'How do I invite members to my Klick?',
     answer:
-      'Lorem ipsum dolor sit amet consectetur adipisicing elit. Nobis et aliquid quaerat possimus maxime! Mollitia reprehenderit neque repellat deleniti delectus architecto dolorum maxime, blanditiis earum ea, incidunt quam possimus cumque.'
+      'After creating a Klick, you can invite members via email or phone number. Each Klick also has a unique invite link that you can share directly with potential members through WhatsApp, SMS, or any messaging platform.'
+  },
+  {
+    id: 'panel5',
+    question: 'Is my financial information secure?',
+    answer:
+      'Absolutely. Trustklick uses industry-standard encryption to protect your data. All Klicks are private by default, meaning only invited members can see group activities. We never share your personal or financial information with third parties.'
+  },
+  {
+    id: 'panel6',
+    question: 'What currencies are supported?',
+    answer:
+      'Trustklick currently supports NGN (Nigerian Naira), USD (US Dollar), GBP (British Pound), and EUR (Euro). This makes it perfect for both local Nigerian groups and international communities.'
   }
 ]
 
@@ -94,7 +106,7 @@ const Faqs = () => {
           <div className='flex items-center justify-center mbe-6 gap-3'>
             <Lines />
             <Typography variant='h6' className='uppercase'>
-              Faq
+              FAQ
             </Typography>
           </div>
         </div>
@@ -105,7 +117,7 @@ const Faqs = () => {
           </Typography>
         </div>
         <Typography className='font-medium text-center'>
-          Browse through these FAQs to find answers to commonly asked questions.
+          Have questions about Trustklick? Find answers to common questions below.
         </Typography>
       </div>
       <Grid container spacing={6}>

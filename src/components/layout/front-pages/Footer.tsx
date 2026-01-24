@@ -146,37 +146,7 @@ const Footer = () => {
           </Grid>
         </div>
       </div>
-      <div className='bg-[#211B2C]'>
-        <div
-          className={classnames(
-            'flex flex-wrap items-center justify-center sm:justify-between gap-4 plb-[15px]',
-            frontCommonStyles.layoutSpacing
-          )}
-        >
-          <Typography className='text-white opacity-[0.92]' variant='body2'>
-            <span>{`© ${new Date().getFullYear()}, Made with `}</span>
-            <span>{`❤️`}</span>
-            <span>{` by `}</span>
-            <Link href='https://pixinvent.com/' target='_blank' className='font-medium text-white'>
-              Pixinvent
-            </Link>
-          </Typography>
-          <div className='flex gap-1.5 items-center opacity-[0.78]'>
-            <IconButton component={Link} size='small' href='https://github.com/pixinvent' target='_blank'>
-              <i className='ri-github-fill text-white text-lg' />
-            </IconButton>
-            <IconButton component={Link} size='small' href='https://www.facebook.com/pixinvents/' target='_blank'>
-              <i className='ri-facebook-fill text-white text-lg' />
-            </IconButton>
-            <IconButton component={Link} size='small' href='https://twitter.com/pixinvents' target='_blank'>
-              <i className='ri-twitter-fill text-white text-lg' />
-            </IconButton>
-            <IconButton component={Link} size='small' href='https://www.linkedin.com/company/pixinvent' target='_blank'>
-              <i className='ri-linkedin-fill text-white text-lg' />
-            </IconButton>
-          </div>
-        </div>
-      </div>
+
     </footer>
   )
 }

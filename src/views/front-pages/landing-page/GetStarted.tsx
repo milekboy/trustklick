@@ -31,29 +31,23 @@ const GetStarted = () => {
         <div className='flex flex-col items-start gap-y-8 pbs-9 lg:plb-9 z-[1]'>
           <div className='flex flex-col gap-1 max-lg:text-center'>
             <Typography color='primary.main' className='font-bold text-[32px]'>
-              Ready to Get Started?
+              Ready to Build Wealth Together?
             </Typography>
             <Typography className='font-medium max-lg:text-center'>
-              Start your project with a 14-day free trial
+              Create your first Klick today – it's free to get started
             </Typography>
           </div>
           <Button
             component={Link}
-            href='/front-pages/payment'
+            href='/register'
             variant='contained'
             endIcon={<DirectionalIcon ltrIconClass='ri-arrow-right-line' rtlIconClass='ri-arrow-left-line' />}
             className='max-lg:self-center'
           >
-            Get Started
+            Create Your Klick
           </Button>
         </div>
-        <div className='flex z-[1]'>
-          <img
-            src='/images/front-pages/landing-page/crm-dashboard.png'
-            alt='dashboard-image'
-            className='max-is-[600px] is-full'
-          />
-        </div>
+
       </div>
     </section>
   )

@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import NetworkInstance from '@/components/NetworkInstance'
 import { useAuth } from '@/components/AuthContext'
 import Card from '@mui/material/Card'
-import CardHeader from '@mui/material/CardHeader'
+import CardContent from '@mui/material/CardContent'
 import Button from '@mui/material/Button'
 import Tooltip from '@mui/material/Tooltip'
 import IconButton from '@mui/material/IconButton'
@@ -13,21 +13,10 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import Chip from '@mui/material/Chip'
 import InputAdornment from '@mui/material/InputAdornment'
-import TablePagination from '@mui/material/TablePagination'
+import Grid from '@mui/material/Grid2'
+import Box from '@mui/material/Box'
+import Divider from '@mui/material/Divider'
 import { useRouter } from 'next/navigation'
-import classnames from 'classnames'
-import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel
-} from '@tanstack/react-table'
-import type { ColumnDef } from '@tanstack/react-table'
-import OptionMenu from '@core/components/option-menu'
-import tableStyles from '@core/styles/table.module.css'
 
 type KlickType = {
   id: number
@@ -37,58 +26,8 @@ type KlickType = {
   invite_url: string
   is_admin?: boolean
   member_count?: number
+  description?: string
 }
-
-type KlickWithActions = KlickType & {
-  actions?: string
-}
-
-const DebouncedInput = ({
-  value: initialValue,
-  onChange,
-  debounce = 500,
-  ...props
-}: {
-  value: string | number
-  onChange: (value: string | number) => void
-  debounce?: number
-} & React.InputHTMLAttributes<HTMLInputElement>) => {
-  const [value, setValue] = useState(initialValue)
-
-  useEffect(() => {
-    setValue(initialValue)
-  }, [initialValue])
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      onChange(value)
-    }, debounce)
-
-    return () => clearTimeout(timeout)
-  }, [value, debounce, onChange])
-
-  const { color, ...inputProps } = props as any
-
-  return (
-    <TextField
-      {...inputProps}
-      value={value}
-      onChange={e => setValue(e.target.value)}
-      size='small'
-      slotProps={{
-        input: {
-          startAdornment: (
-            <InputAdornment position='start'>
-              <i className='ri-search-line' />
-            </InputAdornment>
-          )
-        }
-      }}
-    />
-  )
-}
-
-const columnHelper = createColumnHelper<KlickWithActions>()
 
 export default function KlickList() {
   const api = NetworkInstance()
@@ -98,7 +37,7 @@ export default function KlickList() {
   const [klicks, setKlicks] = useState<KlickType[]>([])
   const [loading, setLoading] = useState(true)
   const [copiedId, setCopiedId] = useState<number | null>(null)
-  const [globalFilter, setGlobalFilter] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Fetch Klicks
   useEffect(() => {
@@ -129,100 +68,11 @@ export default function KlickList() {
     setTimeout(() => setCopiedId(null), 1500)
   }
 
-  const columns = useMemo<ColumnDef<KlickWithActions, any>[]>(
-    () => [
-      columnHelper.accessor('name', {
-        header: 'Klick Name',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-3'>
-            <div className='flex flex-col'>
-              <Typography className='font-medium' color='text.primary'>
-                {row.original.name}
-              </Typography>
-              {row.original.is_admin && (
-                <Chip label='Admin' size='small' variant='tonal' color='primary' className='w-fit' />
-              )}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('whatsapp_group_link', {
-        header: 'WhatsApp Group',
-        cell: ({ row }) => (
-          <Button
-            variant='text'
-            size='small'
-            href={row.original.whatsapp_group_link}
-            target='_blank'
-            startIcon={<i className='ri-whatsapp-line' />}
-          >
-            Open Group
-          </Button>
-        )
-      }),
-      columnHelper.accessor('announcement', {
-        header: 'Announcement',
-        cell: ({ row }) => (
-          <Typography variant='body2' className='max-w-xs truncate'>
-            {row.original.announcement || 'No announcement'}
-          </Typography>
-        )
-      }),
-     
-      columnHelper.accessor('invite_url', {
-        header: 'Invite Link',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-2'>
-            <Typography variant='body2' className='font-mono text-xs max-w-xs truncate'>
-              {row.original.invite_url}
-            </Typography>
-            <Tooltip title={copiedId === row.original.id ? 'Copied!' : 'Copy invite URL'}>
-              <IconButton size='small' onClick={() => copyToClipboard(row.original.invite_url, row.original.id)}>
-                <i className='ri-file-copy-line text-lg' />
-              </IconButton>
-            </Tooltip>
-          </div>
-        )
-      }),
-      columnHelper.accessor('actions', {
-        header: 'Actions',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-1'>
-            <Button
-              variant='outlined'
-              size='small'
-              onClick={() => router.push(`/dashboards/view-klicks/${row.original.id}`)}
-            >
-              View
-            </Button>
-         
-          </div>
-        ),
-        enableSorting: false
-      })
-    ],
-    [copiedId, router]
+  // Filter klicks based on search
+  const filteredKlicks = klicks.filter(klick =>
+    klick.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    klick.announcement?.toLowerCase().includes(searchQuery.toLowerCase())
   )
-
-  const table = useReactTable({
-    data: klicks as KlickWithActions[],
-    columns,
-    filterFns: {
-      fuzzy: (row, columnId, value) => {
-        const cellValue = row.getValue(columnId) as string
-        return cellValue?.toLowerCase().includes(value.toLowerCase())
-      }
-    },
-    state: {
-      globalFilter
-    },
-    onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: 'fuzzy',
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel()
-  })
 
   if (loading) {
     return (
@@ -233,80 +83,165 @@ export default function KlickList() {
   }
 
   return (
-    <Card>
-      <CardHeader
-        title='All Klicks'
-        subheader={`${klicks.length} Klick${klicks.length !== 1 ? 's' : ''} found`}
-        action={
-          <div className='flex items-center gap-3'>
-            <DebouncedInput
-              value={globalFilter ?? ''}
-              onChange={value => setGlobalFilter(String(value))}
+    <div className='space-y-6'>
+      {/* Search Bar */}
+      <Card>
+        <CardContent className='p-4'>
+          <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
+            <div>
+              <Typography variant='h5' className='font-bold mb-1'>
+                All Klicks
+              </Typography>
+              <Typography variant='body2' color='text.secondary'>
+                {filteredKlicks.length} Klick{filteredKlicks.length !== 1 ? 's' : ''} found
+              </Typography>
+            </div>
+            <TextField
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
               placeholder='Search Klicks...'
-              className='min-is-[200px]'
+              size='small'
+              sx={{ minWidth: { xs: '100%', sm: '300px' } }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position='start'>
+                      <i className='ri-search-line' />
+                    </InputAdornment>
+                  )
+                }
+              }}
             />
           </div>
-        }
-      />
-      <div className='overflow-x-auto'>
-        <table className={tableStyles.table}>
-          <thead>
-            {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <th key={header.id}>
-                    {header.isPlaceholder ? null : (
-                      <div
-                        className={classnames({
-                          'flex items-center': header.column.getIsSorted(),
-                          'cursor-pointer select-none': header.column.getCanSort()
-                        })}
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        {{
-                          asc: <i className='ri-arrow-up-s-line text-xl' />,
-                          desc: <i className='ri-arrow-down-s-line text-xl' />
-                        }[header.column.getIsSorted() as string] ?? null}
-                      </div>
+        </CardContent>
+      </Card>
+
+      {/* Klicks Grid */}
+      {filteredKlicks.length === 0 ? (
+        <Card>
+          <CardContent className='p-8 text-center'>
+            <i className='ri-group-line text-5xl text-textSecondary mb-4' />
+            <Typography variant='h6' color='text.secondary' className='mb-2'>
+              {searchQuery ? 'No Klicks found matching your search' : 'No Klicks available'}
+            </Typography>
+            <Typography variant='body2' color='text.secondary'>
+              {!searchQuery && 'Create your first Klick to get started!'}
+            </Typography>
+          </CardContent>
+        </Card>
+      ) : (
+        <Grid container spacing={3}>
+          {filteredKlicks.map(klick => (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={klick.id}>
+              <Card
+                variant='outlined'
+                sx={{
+                  borderColor: 'primary.main',
+                  borderWidth: 2,
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    borderColor: 'primary.dark',
+                    boxShadow: 4,
+                    transform: 'translateY(-4px)'
+                  }
+                }}
+              >
+                <CardContent className='flex-1 p-5 space-y-3'>
+                  {/* Header with Name and Admin Badge */}
+                  <div className='flex items-start justify-between gap-2 mb-2'>
+                    <Typography variant='h6' className='font-bold' color='primary.main' sx={{ lineHeight: 1.3 }}>
+                      {klick.name}
+                    </Typography>
+                    {klick.is_admin && (
+                      <Chip label='Admin' size='small' color='secondary' variant='filled' />
                     )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.length === 0 ? (
-              <tr>
-                <td colSpan={columns.length} className='text-center p-8'>
-                  <Typography variant='body1' color='text.secondary'>
-                    {globalFilter
-                      ? 'No Klicks found matching your search.'
-                      : 'No Klicks available. Create your first Klick!'}
-                  </Typography>
-                </td>
-              </tr>
-            ) : (
-              table.getRowModel().rows.map(row => (
-                <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
-                  {row.getVisibleCells().map(cell => (
-                    <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                  ))}
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-      <TablePagination
-        component='div'
-        count={table.getFilteredRowModel().rows.length}
-        rowsPerPage={table.getState().pagination.pageSize}
-        page={table.getState().pagination.pageIndex}
-        onPageChange={(_, page) => table.setPageIndex(page)}
-        onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
-        rowsPerPageOptions={[10, 25, 50]}
-      />
-    </Card>
+                  </div>
+
+                  <Divider />
+
+                  {/* Announcement */}
+                  {klick.announcement ? (
+                    <Box sx={{ bgcolor: 'primary.lighter', p: 2, borderRadius: 2 }}>
+                      <Typography variant='caption' sx={{ fontWeight: 600, color: 'primary.dark' }} className='flex items-center gap-1 mb-1'>
+                        <i className='ri-megaphone-line' />
+                        Announcement
+                      </Typography>
+                      <Typography variant='body2' sx={{ color: 'primary.dark' }} className='line-clamp-2'>
+                        {klick.announcement}
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Typography variant='body2' color='text.secondary' className='italic'>
+                      No announcement
+                    </Typography>
+                  )}
+
+                  {/* WhatsApp Link */}
+                  <div className='flex items-center gap-2'>
+                    <i className='ri-whatsapp-line text-xl text-success' />
+                    <Button
+                      variant='text'
+                      size='small'
+                      href={klick.whatsapp_group_link}
+                      target='_blank'
+                      sx={{ padding: 0, minWidth: 'auto', textTransform: 'none' }}
+                    >
+                      Open WhatsApp Group
+                    </Button>
+                  </div>
+
+                  {/* Invite Link */}
+                  <div className='bg-gray-50 p-3 rounded-lg'>
+                    <Typography variant='caption' className='font-semibold text-gray-700 flex items-center gap-1 mb-1'>
+                      <i className='ri-link' />
+                      Invite Link
+                    </Typography>
+                    <div className='flex items-center gap-2'>
+                      <Typography variant='caption' className='font-mono text-xs text-gray-600 truncate flex-1'>
+                        {klick.invite_url}
+                      </Typography>
+                      <Tooltip title={copiedId === klick.id ? 'Copied!' : 'Copy link'}>
+                        <IconButton
+                          size='small'
+                          onClick={() => copyToClipboard(klick.invite_url, klick.id)}
+                          sx={{ padding: '4px' }}
+                        >
+                          <i className={copiedId === klick.id ? 'ri-check-line text-success' : 'ri-file-copy-line'} />
+                        </IconButton>
+                      </Tooltip>
+                    </div>
+                  </div>
+
+                  {/* Member Count if available */}
+                  {klick.member_count !== undefined && (
+                    <div className='flex items-center gap-2 text-gray-600'>
+                      <i className='ri-user-3-line' />
+                      <Typography variant='body2'>
+                        {klick.member_count} member{klick.member_count !== 1 ? 's' : ''}
+                      </Typography>
+                    </div>
+                  )}
+                </CardContent>
+
+                {/* View Button */}
+                <Box className='p-4 pt-0'>
+                  <Button
+                    variant='contained'
+                    fullWidth
+                    color='primary'
+                    onClick={() => router.push(`/dashboards/view-klicks/${klick.id}`)}
+                  >
+                    View Details
+                  </Button>
+                </Box>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+    </div>
   )
 }

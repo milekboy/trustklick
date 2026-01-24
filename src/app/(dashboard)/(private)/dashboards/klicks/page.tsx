@@ -147,7 +147,7 @@ export default function Klicks() {
                 >
                   Join Klick
                 </Button>
-             
+
               </div>
             </div>
           </div>
@@ -155,7 +155,7 @@ export default function Klicks() {
       </Card>
 
       {/* Statistics Cards */}
-      <Grid container spacing={4}>
+      {/* <Grid container spacing={4}>
         {statCards.map((stat, index) => (
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
             <Card
@@ -211,7 +211,7 @@ export default function Klicks() {
             </Card>
           </Grid>
         ))}
-      </Grid>
+      </Grid> */}
 
       {/* Klicks Table */}
       <KlickList />

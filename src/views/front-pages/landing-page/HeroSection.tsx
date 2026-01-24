@@ -33,13 +33,9 @@ const HeroSection = ({ mode }: { mode: Mode }) => {
   const dashboardImageDark = '/images/front-pages/landing-page/hero-dashboard-dark.png'
   const elementsImageLight = '/images/front-pages/landing-page/hero-elements-light.png'
   const elementsImageDark = '/images/front-pages/landing-page/hero-elements-dark.png'
-  const heroSectionBgLight = '/images/front-pages/landing-page/hero-bg-light.png'
-  const heroSectionBgDark = '/images/front-pages/landing-page/hero-bg-dark.png'
-
   // Hooks
   const dashboardImage = useImageVariant(mode, dashboardImageLight, dashboardImageDark)
   const elementsImage = useImageVariant(mode, elementsImageLight, elementsImageDark)
-  const heroSectionBg = useImageVariant(mode, heroSectionBgLight, heroSectionBgDark)
   const isAboveLgScreen = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'))
 
   useEffect(() => {
@@ -72,24 +68,49 @@ const HeroSection = ({ mode }: { mode: Mode }) => {
 
   return (
     <section id='home' className='relative overflow-hidden pbs-[70px] -mbs-[70px] bg-backgroundPaper z-[1]'>
-      <img src={heroSectionBg} alt='hero-bg' className={styles.heroSectionBg} />
+      {/* Animated Gradient Background */}
+      <div
+        className="absolute inset-0 z-[-1]"
+        style={{
+          background: `
+            linear-gradient(135deg, rgba(156, 39, 176, 0.03) 0%, rgba(156, 39, 176, 0.08) 100%),
+            radial-gradient(circle at 15% 50%, rgba(156, 39, 176, 0.08) 0%, transparent 25%),
+            radial-gradient(circle at 85% 30%, rgba(103, 58, 183, 0.08) 0%, transparent 25%)
+          `,
+          backgroundSize: 'cover'
+        }}
+      />
+
+      {/* Decorative Circles */}
+      <div className="absolute top-20 left-10 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-10 right-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
       <div className={classnames('pbs-16 overflow-hidden', frontCommonStyles.layoutSpacing)}>
-        <div className='md:max-is-[550px] mlb-0 mli-auto text-center'>
+        <div className='md:max-is-[650px] mlb-0 mli-auto text-center'>
           <Typography className='font-extrabold text-primary sm:text-[38px] text-3xl mbe-4 leading-[44px]'>
-            All in one sass application for your business
+            Trust the Click. Build Wealth Together.
           </Typography>
-          <Typography className='font-medium' color='text.primary'>
-            No coding required to make customizations. The live customizer has everything your marketing need.
+          <Typography className='font-medium text-lg' color='text.primary'>
+            Trustklick is the modern platform for managing group savings, contributions, and investment clubs.
+            Create or join a Klick, manage rotating savings (Esusu/Ajo), one-off contributions, or joint investments – all in one secure place.
           </Typography>
-          <div className='mlb-8'>
+          <div className='mlb-8 flex gap-4 justify-center flex-wrap'>
             <Button
               component={Link}
               size='large'
-              href='/front-pages/landing-page#pricing-plans'
+              href='/register'
               variant='contained'
               color='primary'
             >
-              Get Early Access
+              Get Started Free
+            </Button>
+            <Button
+              component={Link}
+              size='large'
+              href='/front-pages/landing-page#cycle-types'
+              variant='outlined'
+              color='primary'
+            >
+              Explore Cycle Types
             </Button>
           </div>
         </div>

@@ -28,33 +28,33 @@ import frontCommonStyles from '@views/front-pages/styles.module.css'
 const feature = [
   {
     icon: <LaptopCharging />,
-    title: 'Quality Code',
-    description: 'Code structure that all developers will easily understand and fall in love with.'
+    title: 'Create Klicks',
+    description: 'Start your own savings group in minutes. Invite members via email or phone and manage everything from one dashboard.'
   },
   {
     icon: <TransitionUp />,
-    title: 'Continuous Updates',
-    description: 'Free updates for the next 12 months, including new demos and features.'
+    title: 'Flexible Cycles',
+    description: 'Choose from Thrift (rotating savings), Contribution (one-off support), or Investment (joint ventures) based on your needs.'
   },
   {
     icon: <Edit />,
-    title: 'Stater-Kit',
-    description: 'Start your project quickly without having to remove unnecessary features.'
+    title: 'Easy Payments',
+    description: 'Track payments, upload evidence, and confirm receipts. Know exactly who has paid and who has received funds.'
   },
   {
     icon: <Cube />,
-    title: 'API Ready',
-    description: 'Just change the endpoint and see your own data loaded within seconds.'
+    title: 'Transparent Tracking',
+    description: 'Every transaction is logged. View schedules, invoices, and payment history for complete transparency.'
   },
   {
     icon: <LifeBuoy />,
-    title: 'Excellent Support',
-    description: 'An easy-to-follow doc with lots of references and code examples.'
+    title: 'Secure & Private',
+    description: 'Your financial data is encrypted and protected. Private Klicks ensure only invited members can participate.'
   },
   {
     icon: <Document />,
-    title: 'Well Documented',
-    description: 'An easy-to-follow doc with lots of references and code examples.'
+    title: 'Multi-Currency Support',
+    description: 'Operate in NGN, USD, GBP, or EUR. Perfect for local groups and international communities alike.'
   }
 ]
 
@@ -91,17 +91,17 @@ const UsefulFeature = () => {
           <div className='flex items-center justify-center mbe-6 gap-3'>
             <Lines />
             <Typography color='text.primary' className='font-medium uppercase'>
-              Useful Feature
+              Why Trustklick?
             </Typography>
           </div>
           <div className='flex items-baseline max-sm:flex-col gap-x-2 mbe-3 sm:mbe-2'>
             <Typography variant='h4' className='font-bold'>
               Everything you need
             </Typography>
-            <Typography variant='h5'>to start your next project</Typography>
+            <Typography variant='h5'>to manage group finances</Typography>
           </div>
-          <Typography className='font-medium text-center'>
-            Not just a set of tools, the package includes ready-to-deploy conceptual application.
+          <Typography className='font-medium text-center max-w-2xl'>
+            Whether you're running an Esusu, Ajo, contribution pool, or investment club – Trustklick gives you the tools to organize, track, and grow together.
           </Typography>
         </div>
         <div>

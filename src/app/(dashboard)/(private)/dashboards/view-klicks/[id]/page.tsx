@@ -41,6 +41,7 @@ import Select from '@mui/material/Select'
 import MenuItem from '@mui/material/MenuItem'
 import FormControl from '@mui/material/FormControl'
 import InputLabel from '@mui/material/InputLabel'
+import LoadingButton from '@mui/lab/LoadingButton'
 
 // Component Imports
 import CustomTabList from '@core/components/mui/TabList'
@@ -200,6 +201,18 @@ export default function SingleKlickPage() {
   const [announcementText, setAnnouncementText] = useState('')
   const [isUpdatingAnnouncement, setIsUpdatingAnnouncement] = useState(false)
   const [isInviting, setIsInviting] = useState(false)
+
+  // Edit Klick State
+  const [editKlickOpen, setEditKlickOpen] = useState(false)
+  const [editKlickForm, setEditKlickForm] = useState({
+    name: '',
+    description: '',
+    whatsapp_group_link: '',
+    announcement: '',
+    total_shares: '',
+    share_value: ''
+  })
+  const [updatingKlick, setUpdatingKlick] = useState(false)
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -783,6 +796,56 @@ export default function SingleKlickPage() {
     }
   }
 
+  const handleUpdateKlick = async () => {
+    try {
+      setUpdatingKlick(true)
+
+      const payload = {
+        name: editKlickForm.name,
+        description: editKlickForm.description,
+        whatsapp_group_link: editKlickForm.whatsapp_group_link,
+        announcement: editKlickForm.announcement,
+        total_shares: parseFloat(editKlickForm.total_shares) || 0,
+        share_value: parseFloat(editKlickForm.share_value) || 0
+      }
+
+      const res = await api.put(`/klicks/${id}`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      setToast({ message: res.data.message || 'Klick updated successfully', type: 'success' })
+      setEditKlickOpen(false)
+
+      // Refresh klick data
+      const klickRes = await api.get(`/klicks/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setKlick(klickRes.data.data)
+    } catch (error: any) {
+      console.error('Error updating klick:', error)
+      setToast({
+        message: error?.response?.data?.message || 'Failed to update klick',
+        type: 'error'
+      })
+    } finally {
+      setUpdatingKlick(false)
+    }
+  }
+
+  const openEditKlickDialog = () => {
+    if (!klick) return
+
+    setEditKlickForm({
+      name: klick.name || '',
+      description: klick.description || '',
+      whatsapp_group_link: klick.whatsapp_group_link || '',
+      announcement: klick.announcement || '',
+      total_shares: klick.total_shares?.toString() || '',
+      share_value: klick.share_value?.toString() || ''
+    })
+    setEditKlickOpen(true)
+  }
+
   if (loading) {
     return (
       <div className='flex justify-center items-center min-h-[400px]'>
@@ -824,6 +887,13 @@ export default function SingleKlickPage() {
             </div>
 
             <div className='flex gap-2'>
+              <Button
+                variant='outlined'
+                startIcon={<i className='ri-edit-line' />}
+                onClick={openEditKlickDialog}
+              >
+                Edit Klick
+              </Button>
               <Tooltip title={copied ? 'Copied!' : 'Copy invite URL'}>
                 <IconButton onClick={copyInvite}>
                   <i className='ri-file-copy-line text-xl' />
@@ -1087,7 +1157,7 @@ export default function SingleKlickPage() {
                   Quick Stats
                 </Typography>
                 <Grid container spacing={3}>
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                     <Card variant='outlined' className='p-4'>
                       <div className='text-center mb-3'>
                         <i className='ri-refresh-line text-3xl text-primary mb-2' />
@@ -1109,29 +1179,8 @@ export default function SingleKlickPage() {
                       </Button>
                     </Card>
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Card variant='outlined' className='p-4'>
-                      <div className='text-center mb-3'>
-                        <i className='ri-user-add-line text-3xl text-warning mb-2' />
-                        <Typography variant='h5' className='font-bold'>
-                          {joinRequests.length}
-                        </Typography>
-                        <Typography variant='body2' color='text.secondary'>
-                          Pending Requests
-                        </Typography>
-                      </div>
-                      <Button
-                        variant='outlined'
-                        fullWidth
-                        size='small'
-                        onClick={() => setActiveTab('join-requests')}
-                        startIcon={<i className='ri-eye-line' />}
-                      >
-                        View Requests
-                      </Button>
-                    </Card>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+
+                  <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                     <Card variant='outlined' className='p-4'>
                       <div className='text-center mb-3'>
                         <i className='ri-group-line text-3xl text-primary mb-2' />
@@ -1590,8 +1639,95 @@ export default function SingleKlickPage() {
         </TabContext >
       </Card >
 
-      {/* Product Type Selection Modal */}
-      {/* Product Type Selection Modal */}
+
+      {/* Edit Klick Dialog */}
+
+
+      <Dialog
+        open={editKlickOpen}
+        onClose={() => {
+          if (!updatingKlick) {
+            setEditKlickOpen(false)
+          }
+        }}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Edit Klick</DialogTitle>
+        <DialogContent dividers>
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                label="Klick Name"
+                value={editKlickForm.name}
+                onChange={(e) => setEditKlickForm({ ...editKlickForm, name: e.target.value })}
+                required
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
+                label="Description"
+                value={editKlickForm.description}
+                onChange={(e) => setEditKlickForm({ ...editKlickForm, description: e.target.value })}
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                label="WhatsApp Group Link"
+                value={editKlickForm.whatsapp_group_link}
+                onChange={(e) => setEditKlickForm({ ...editKlickForm, whatsapp_group_link: e.target.value })}
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
+                label="Announcement"
+                value={editKlickForm.announcement}
+                onChange={(e) => setEditKlickForm({ ...editKlickForm, announcement: e.target.value })}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Total Shares"
+                value={editKlickForm.total_shares}
+                onChange={(e) => setEditKlickForm({ ...editKlickForm, total_shares: e.target.value })}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Share Value"
+                value={editKlickForm.share_value}
+                onChange={(e) => setEditKlickForm({ ...editKlickForm, share_value: e.target.value })}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditKlickOpen(false)} disabled={updatingKlick}>
+            Cancel
+          </Button>
+          <LoadingButton
+            loading={updatingKlick}
+            variant="contained"
+            onClick={handleUpdateKlick}
+            disabled={!editKlickForm.name}
+          >
+            Update Klick
+          </LoadingButton>
+        </DialogActions>
+      </Dialog>
+
       <ProductTypeSelectionModal
         open={productTypeSelectionOpen}
         onClose={() => setProductTypeSelectionOpen(false)}
@@ -2182,5 +2318,6 @@ export default function SingleKlickPage() {
         </DialogActions>
       </Dialog>
     </div >
+
   )
 }

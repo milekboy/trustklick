@@ -38,6 +38,10 @@ import CustomAvatar from '@core/components/mui/Avatar'
 import { getInitials } from '@/utils/getInitials'
 import IconButton from '@mui/material/IconButton'
 import TextField from '@mui/material/TextField'
+import FormControl from '@mui/material/FormControl'
+import InputLabel from '@mui/material/InputLabel'
+import Select from '@mui/material/Select'
+import MenuItem from '@mui/material/MenuItem'
 
 // Icons
 import Icon from '@mui/material/Icon' // Fallback if specific icons needed, but using class names mostly
@@ -188,6 +192,42 @@ export default function ViewCyclePage() {
     const [editCycleAnnouncementOpen, setEditCycleAnnouncementOpen] = useState(false)
     const [cycleAnnouncementText, setCycleAnnouncementText] = useState('')
     const [isUpdatingCycleAnnouncement, setIsUpdatingCycleAnnouncement] = useState(false)
+
+    // Account Management State
+    const [accounts, setAccounts] = useState<any[]>([])
+    const [loadingAccounts, setLoadingAccounts] = useState(false)
+    const [accountDialogOpen, setAccountDialogOpen] = useState(false)
+    const [selectedRecipient, setSelectedRecipient] = useState<RecipientType | null>(null)
+    const [accountForm, setAccountForm] = useState({
+        account_type: 'bank',
+        currency: 'NGN',
+        account_number: '',
+        account_name: '',
+        sort_code: '',
+        country_code: 'NG'
+    })
+    const [savingAccount, setSavingAccount] = useState(false)
+    const [editingAccountId, setEditingAccountId] = useState<number | null>(null)
+
+    // Edit/Delete Cycle State
+    const [editCycleOpen, setEditCycleOpen] = useState(false)
+    const [deletingCycle, setDeletingCycle] = useState(false)
+    const [editCycleForm, setEditCycleForm] = useState({
+        cycle_name: '',
+        payment_frequency: 'monthly',
+        currency: 'NGN',
+        min_amount: '',
+        saving_amount: '',
+        total_slot: '',
+        product_type: '',
+        payment_type: 'fixed',
+        expected_start_date: '',
+        preffered_payment_period: '',
+        invite_ref: '',
+        announcement: '',
+        disbursement_structure: 'individual'
+    })
+    const [updatingCycle, setUpdatingCycle] = useState(false)
 
     // Fetch Data
     useEffect(() => {
@@ -481,6 +521,242 @@ export default function ViewCyclePage() {
         }
     }
 
+    // Account Management Functions
+    const fetchAccounts = async () => {
+        try {
+            setLoadingAccounts(true)
+            const res = await api.get('/accounts', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            setAccounts(res.data.data || [])
+        } catch (error: any) {
+            console.error('Error fetching accounts:', error)
+            setToast({
+                message: error?.response?.data?.message || 'Failed to load accounts',
+                type: 'error'
+            })
+        } finally {
+            setLoadingAccounts(false)
+        }
+    }
+
+    const handleCreateAccount = async () => {
+        try {
+            setSavingAccount(true)
+            const res = await api.post('/accounts', accountForm, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+
+            setToast({ message: res.data.message || 'Account created successfully', type: 'success' })
+            setAccountDialogOpen(false)
+            resetAccountForm()
+
+            // Refresh accounts and schedule invoices
+            await fetchAccounts()
+            if (activeSchedule) {
+                await fetchScheduleInvoices(activeSchedule.id)
+            }
+        } catch (error: any) {
+            console.error('Error creating account:', error)
+            setToast({
+                message: error?.response?.data?.message || 'Failed to create account',
+                type: 'error'
+            })
+        } finally {
+            setSavingAccount(false)
+        }
+    }
+
+    const handleUpdateAccount = async () => {
+        if (!editingAccountId) return
+
+        try {
+            setSavingAccount(true)
+            const res = await api.put(`/accounts/${editingAccountId}`, accountForm, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+
+            setToast({ message: res.data.message || 'Account updated successfully', type: 'success' })
+            setAccountDialogOpen(false)
+            resetAccountForm()
+
+            // Refresh accounts and schedule invoices
+            await fetchAccounts()
+            if (activeSchedule) {
+                await fetchScheduleInvoices(activeSchedule.id)
+            }
+        } catch (error: any) {
+            console.error('Error updating account:', error)
+            setToast({
+                message: error?.response?.data?.message || 'Failed to update account',
+                type: 'error'
+            })
+        } finally {
+            setSavingAccount(false)
+        }
+    }
+
+    const handleDeleteAccount = async (accountId: number) => {
+        if (!confirm('Are you sure you want to delete this account?')) return
+
+        try {
+            const res = await api.delete(`/accounts/${accountId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+
+            setToast({ message: res.data.message || 'Account deleted successfully', type: 'success' })
+
+            // Refresh accounts and schedule invoices
+            await fetchAccounts()
+            if (activeSchedule) {
+                await fetchScheduleInvoices(activeSchedule.id)
+            }
+        } catch (error: any) {
+            console.error('Error deleting account:', error)
+            setToast({
+                message: error?.response?.data?.message || 'Failed to delete account',
+                type: 'error'
+            })
+        }
+    }
+
+    const openAccountDialog = (recipient: RecipientType, existingAccount?: any) => {
+        setSelectedRecipient(recipient)
+
+        if (existingAccount) {
+            // Edit mode
+            setEditingAccountId(existingAccount.id)
+            setAccountForm({
+                account_type: existingAccount.account_type || 'bank',
+                currency: existingAccount.currency || 'NGN',
+                account_number: existingAccount.account_number || '',
+                account_name: existingAccount.account_name || '',
+                sort_code: existingAccount.sort_code || '',
+                country_code: existingAccount.country_code || 'NG'
+            })
+        } else {
+            // Create mode
+            setEditingAccountId(null)
+            resetAccountForm()
+        }
+
+        setAccountDialogOpen(true)
+    }
+
+    const resetAccountForm = () => {
+        setAccountForm({
+            account_type: 'bank',
+            currency: 'NGN',
+            account_number: '',
+            account_name: '',
+            sort_code: '',
+            country_code: 'NG'
+        })
+        setEditingAccountId(null)
+        setSelectedRecipient(null)
+    }
+
+    // Fetch accounts on mount
+    useEffect(() => {
+        if (token) {
+            fetchAccounts()
+        }
+    }, [token])
+
+    // Edit/Delete Cycle Functions
+    const handleDeleteCycle = async () => {
+        if (!confirm('Are you sure you want to delete this cycle? This action cannot be undone.')) return
+
+        try {
+            setDeletingCycle(true)
+            const res = await api.delete(`/cycles/${cycleId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+
+            setToast({ message: res.data.message || 'Cycle deleted successfully', type: 'success' })
+
+            // Redirect to klick page after delete
+            setTimeout(() => {
+                router.push(`/dashboards/view-klicks/${id}`)
+            }, 1500)
+        } catch (error: any) {
+            console.error('Error deleting cycle:', error)
+            setToast({
+                message: error?.response?.data?.message || 'Failed to delete cycle',
+                type: 'error'
+            })
+        } finally {
+            setDeletingCycle(false)
+        }
+    }
+
+    const handleUpdateCycle = async () => {
+        try {
+            setUpdatingCycle(true)
+
+            const payload = {
+                cycle_name: editCycleForm.cycle_name,
+                payment_frequency: editCycleForm.payment_frequency,
+                currency: editCycleForm.currency,
+                min_amount: parseFloat(editCycleForm.min_amount) || 0,
+                saving_amount: parseFloat(editCycleForm.saving_amount) || 0,
+                total_slot: parseInt(editCycleForm.total_slot),
+                product_type: editCycleForm.product_type,
+                payment_type: editCycleForm.payment_type,
+                expected_start_date: editCycleForm.expected_start_date,
+                preffered_payment_period: editCycleForm.preffered_payment_period,
+                invite_ref: editCycleForm.invite_ref,
+                announcement: editCycleForm.announcement,
+                disbursement_structure: editCycleForm.disbursement_structure
+            }
+
+            const res = await api.put(`/cycles/${cycleId}`, payload, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+
+            setToast({ message: res.data.message || 'Cycle updated successfully', type: 'success' })
+            setEditCycleOpen(false)
+
+            // Refresh cycle data
+            const cyclesRes = await api.get(`/klicks/${id}/cycles`, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            const foundCycle = cyclesRes.data.data?.find((c: any) => c.id === parseInt(cycleId))
+            if (foundCycle) {
+                setCycle(foundCycle)
+            }
+        } catch (error: any) {
+            console.error('Error updating cycle:', error)
+            setToast({
+                message: error?.response?.data?.message || 'Failed to update cycle',
+                type: 'error'
+            })
+        } finally {
+            setUpdatingCycle(false)
+        }
+    }
+
+    const openEditCycleDialog = () => {
+        if (!cycle) return
+
+        setEditCycleForm({
+            cycle_name: cycle.cycle_name || '',
+            payment_frequency: cycle.payment_frequency || 'monthly',
+            currency: cycle.currency || 'NGN',
+            min_amount: cycle.min_amount?.toString() || '',
+            saving_amount: cycle.saving_amount?.toString() || '',
+            total_slot: cycle.total_slot?.toString() || '',
+            product_type: cycle.product_type || '',
+            payment_type: cycle.payment_type || 'fixed',
+            expected_start_date: cycle.expected_start_date || '',
+            preffered_payment_period: cycle.preffered_payment_period || '',
+            invite_ref: cycle.invite_ref || '',
+            announcement: cycle.announcement || '',
+            disbursement_structure: cycle.disbursement_structure || 'individual'
+        })
+        setEditCycleOpen(true)
+    }
+
     // Active Schedule Helpers
     const activeSchedule = schedules.find(s => s.is_active)
     const isActiveScheduleRecipient = activeSchedule ? isUserRecipient(activeSchedule.id) : false
@@ -512,7 +788,7 @@ export default function ViewCyclePage() {
             {/* Header */}
             <Card>
                 <CardContent className='p-6'>
-                    <div className='flex items-center gap-2 mb-2'>
+                    <div className='flex items-center gap-2 mb-2 justify-between'>
                         <Button
                             startIcon={<i className="ri-arrow-left-line" />}
                             onClick={() => router.back()}
@@ -521,6 +797,25 @@ export default function ViewCyclePage() {
                         >
                             Back to Cycle List
                         </Button>
+                        <div className='flex gap-2'>
+                            <Button
+                                variant="outlined"
+                                color="primary"
+                                startIcon={<i className="ri-edit-line" />}
+                                onClick={openEditCycleDialog}
+                            >
+                                Edit Cycle
+                            </Button>
+                            <LoadingButton
+                                loading={deletingCycle}
+                                variant="outlined"
+                                color="error"
+                                startIcon={<i className="ri-delete-bin-line" />}
+                                onClick={handleDeleteCycle}
+                            >
+                                Delete Cycle
+                            </LoadingButton>
+                        </div>
                     </div>
                     <Typography variant='h4' className='font-bold mb-1'>
                         {klick?.name || 'Klick Details'}
@@ -772,34 +1067,97 @@ export default function ViewCyclePage() {
                                                     {/* Show Recipient Info */}
                                                     {activeScheduleRecipients.length > 0 && (
                                                         <Box className="mt-4 mb-4">
-                                                            <Typography variant="body2" className="font-semibold mb-2">
+                                                            <Typography variant="body2" className="font-semibold mb-3">
                                                                 Recipient{activeScheduleRecipients.length > 1 ? 's' : ''}:
                                                             </Typography>
-                                                            <div className="flex flex-wrap gap-3 mb-3">
+                                                            <div className="space-y-3">
                                                                 {activeScheduleRecipients.map((recipient, idx) => (
-                                                                    <Chip
-                                                                        key={idx}
-                                                                        avatar={
-                                                                            <CustomAvatar skin="light" color="primary" size={24}>
+                                                                    <Card key={idx} variant="outlined" className="p-4">
+                                                                        <Box className="flex items-start gap-3">
+                                                                            <CustomAvatar skin="light" color="primary" size={48}>
                                                                                 {getInitials(`${recipient.user.first_name} ${recipient.user.last_name}`)}
                                                                             </CustomAvatar>
-                                                                        }
-                                                                        label={`${recipient.user.first_name} ${recipient.user.last_name}`}
-                                                                        variant="outlined"
-                                                                        size="small"
-                                                                    />
+                                                                            <Box className="flex-1">
+                                                                                <Typography variant="body1" className="font-semibold mb-1">
+                                                                                    {recipient.user.first_name} {recipient.user.last_name}
+                                                                                </Typography>
+                                                                                <Typography variant="caption" color="text.secondary" className="block mb-2">
+                                                                                    {recipient.user.email}
+                                                                                </Typography>
+
+                                                                                <Divider className="my-2" />
+
+                                                                                {recipient.account ? (
+                                                                                    <Box className="space-y-1">
+                                                                                        <div className="flex items-center gap-2">
+                                                                                            <Chip
+                                                                                                label="Account Set"
+                                                                                                size="small"
+                                                                                                color="success"
+                                                                                                variant="outlined"
+                                                                                                icon={<i className="ri-check-line" />}
+                                                                                            />
+                                                                                        </div>
+                                                                                        <Typography variant="caption" color="text.secondary" className="block">
+                                                                                            <strong>Account Name:</strong> {recipient.account.account_name}
+                                                                                        </Typography>
+                                                                                        <Typography variant="caption" color="text.secondary" className="block">
+                                                                                            <strong>Account Number:</strong> {recipient.account.account_number}
+                                                                                        </Typography>
+                                                                                        <Typography variant="caption" color="text.secondary" className="block">
+                                                                                            <strong>Currency:</strong> {recipient.account.currency}
+                                                                                        </Typography>
+                                                                                        <Typography variant="caption" color="text.secondary" className="block">
+                                                                                            <strong>Country:</strong> {recipient.account.country_code}
+                                                                                        </Typography>
+
+                                                                                        <Box className="flex gap-2 mt-3">
+                                                                                            <Button
+                                                                                                size="small"
+                                                                                                variant="outlined"
+                                                                                                startIcon={<i className="ri-edit-line" />}
+                                                                                                onClick={() => openAccountDialog(recipient, recipient.account)}
+                                                                                            >
+                                                                                                Edit
+                                                                                            </Button>
+                                                                                            <Button
+                                                                                                size="small"
+                                                                                                variant="outlined"
+                                                                                                color="error"
+                                                                                                startIcon={<i className="ri-delete-bin-line" />}
+                                                                                                onClick={() => handleDeleteAccount(recipient.account.id)}
+                                                                                            >
+                                                                                                Delete
+                                                                                            </Button>
+                                                                                        </Box>
+                                                                                    </Box>
+                                                                                ) : (
+                                                                                    <Box>
+                                                                                        <Chip
+                                                                                            label="Account Not Set"
+                                                                                            size="small"
+                                                                                            color="warning"
+                                                                                            variant="outlined"
+                                                                                            icon={<i className="ri-alert-line" />}
+                                                                                            className="mb-2"
+                                                                                        />
+                                                                                        <Button
+                                                                                            size="small"
+                                                                                            variant="contained"
+                                                                                            color="primary"
+                                                                                            startIcon={<i className="ri-add-line" />}
+                                                                                            onClick={() => openAccountDialog(recipient)}
+                                                                                            fullWidth
+                                                                                        >
+                                                                                            Add Account
+                                                                                        </Button>
+                                                                                    </Box>
+                                                                                )}
+                                                                            </Box>
+                                                                        </Box>
+                                                                    </Card>
                                                                 ))}
                                                             </div>
-                                                            {activeScheduleRecipients.map((recipient, idx) => (
-                                                                <Box key={idx} className="mb-2 p-2 bg-gray-50 rounded">
-                                                                    <Typography variant="caption" color="text.secondary">
-                                                                        Account:
-                                                                    </Typography>
-                                                                    <Typography variant="body2" className="font-medium">
-                                                                        {recipient.account ? JSON.stringify(recipient.account) : 'Not set'}
-                                                                    </Typography>
-                                                                </Box>
-                                                            ))}
                                                         </Box>
                                                     )}
 
@@ -988,34 +1346,35 @@ export default function ViewCyclePage() {
                                                                 <>
                                                                     <Grid size={{ xs: 12 }}>
                                                                         <Divider className="my-2" />
-                                                                        <Typography variant="subtitle2" className="font-semibold mb-2">
+                                                                        <Typography variant="subtitle2" className="font-semibold mb-3">
                                                                             Recipient{recipients.length > 1 ? 's' : ''}:
                                                                         </Typography>
-                                                                        <div className="flex flex-wrap gap-2 mb-2">
+                                                                        <div className="space-y-2">
                                                                             {recipients.map((recipient, idx) => (
-                                                                                <Chip
-                                                                                    key={idx}
-                                                                                    avatar={
-                                                                                        <CustomAvatar skin="light" color="primary" size={24}>
+                                                                                <Card key={idx} variant="outlined" className="p-3">
+                                                                                    <Box className="flex items-start gap-2">
+                                                                                        <CustomAvatar skin="light" color="primary" size={36}>
                                                                                             {getInitials(`${recipient.user.first_name} ${recipient.user.last_name}`)}
                                                                                         </CustomAvatar>
-                                                                                    }
-                                                                                    label={`${recipient.user.first_name} ${recipient.user.last_name}`}
-                                                                                    variant="outlined"
-                                                                                    size="small"
-                                                                                />
+                                                                                        <Box className="flex-1">
+                                                                                            <Typography variant="body2" className="font-semibold">
+                                                                                                {recipient.user.first_name} {recipient.user.last_name}
+                                                                                            </Typography>
+                                                                                            {recipient.account ? (
+                                                                                                <Box className="mt-1">
+                                                                                                    <Chip label="Account Set" size="small" color="success" variant="outlined" className="mb-1" />
+                                                                                                    <Typography variant="caption" color="text.secondary" className="block">
+                                                                                                        {recipient.account.account_name} - {recipient.account.account_number}
+                                                                                                    </Typography>
+                                                                                                </Box>
+                                                                                            ) : (
+                                                                                                <Chip label="Account Not Set" size="small" color="warning" variant="outlined" className="mt-1" />
+                                                                                            )}
+                                                                                        </Box>
+                                                                                    </Box>
+                                                                                </Card>
                                                                             ))}
                                                                         </div>
-                                                                        {recipients.map((recipient, idx) => (
-                                                                            <Box key={idx} className="mb-2 p-2 bg-gray-50 rounded">
-                                                                                <Typography variant="caption" color="text.secondary">
-                                                                                    Account:
-                                                                                </Typography>
-                                                                                <Typography variant="body2" className="font-medium">
-                                                                                    {recipient.account ? JSON.stringify(recipient.account) : 'Not set'}
-                                                                                </Typography>
-                                                                            </Box>
-                                                                        ))}
                                                                     </Grid>
                                                                 </>
                                                             )}
@@ -1040,23 +1399,36 @@ export default function ViewCyclePage() {
                                                                                                 {invoice.user.first_name} {invoice.user.last_name}
                                                                                             </Typography>
                                                                                             <Typography variant="caption" color="text.secondary">
-                                                                                                → {invoice.recipient.first_name} {invoice.recipient.last_name}
+                                                                                                to pay {invoice.recipient.first_name} {invoice.recipient.last_name}
                                                                                             </Typography>
                                                                                             <Typography variant="caption" color="text.secondary" className="block mt-1">
                                                                                                 Account: {invoice.account_id ? invoice.account_id : 'Not set'}
                                                                                             </Typography>
                                                                                         </div>
                                                                                     </div>
-                                                                                    <div className="text-right">
+                                                                                    <div className="text-right flex flex-col items-end gap-1">
                                                                                         <Typography variant="body2" className="font-semibold">
                                                                                             {invoice.amount}
                                                                                         </Typography>
-                                                                                        <Chip
-                                                                                            label={invoice.status.replace('_', ' ')}
-                                                                                            size="small"
-                                                                                            color={invoice.status === 'paid' ? 'success' : 'default'}
-                                                                                            variant="outlined"
-                                                                                        />
+                                                                                        <div className="flex items-center gap-1">
+                                                                                            <Chip
+                                                                                                label={invoice.status.replace('_', ' ')}
+                                                                                                size="small"
+                                                                                                color={invoice.status === 'paid' ? 'success' : 'default'}
+                                                                                                variant="outlined"
+                                                                                            />
+                                                                                            {invoice.status === 'not_paid' && (
+                                                                                                <Button
+                                                                                                    size="small"
+                                                                                                    variant="outlined"
+                                                                                                    color="success"
+                                                                                                    onClick={() => openConfirmDialog(invoice)}
+                                                                                                    startIcon={<i className="ri-check-line" />}
+                                                                                                >
+                                                                                                    Mark as Paid
+                                                                                                </Button>
+                                                                                            )}
+                                                                                        </div>
                                                                                     </div>
                                                                                 </Box>
                                                                             ))}
@@ -1144,6 +1516,273 @@ export default function ViewCyclePage() {
                         startIcon={<i className="ri-check-line" />}
                     >
                         Mark as Paid
+                    </LoadingButton>
+                </DialogActions>
+            </Dialog>
+
+            {/* Account Management Dialog */}
+            <Dialog
+                open={accountDialogOpen}
+                onClose={() => {
+                    if (!savingAccount) {
+                        setAccountDialogOpen(false)
+                        resetAccountForm()
+                    }
+                }}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>
+                    <Typography variant="h6" className="font-bold">
+                        {editingAccountId ? 'Edit Account' : 'Add Account'}
+                    </Typography>
+                    {selectedRecipient && (
+                        <Typography variant="caption" color="text.secondary">
+                            For: {selectedRecipient.user.first_name} {selectedRecipient.user.last_name}
+                        </Typography>
+                    )}
+                </DialogTitle>
+                <DialogContent dividers>
+                    <Box className="space-y-4">
+                        <Grid container spacing={2}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                <FormControl fullWidth size="small">
+                                    <InputLabel>Account Type</InputLabel>
+                                    <Select
+                                        value={accountForm.account_type}
+                                        label="Account Type"
+                                        onChange={(e) => setAccountForm({ ...accountForm, account_type: e.target.value })}
+                                    >
+                                        <MenuItem value="bank">Bank Account</MenuItem>
+
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                <FormControl fullWidth size="small">
+                                    <InputLabel>Currency</InputLabel>
+                                    <Select
+                                        value={accountForm.currency}
+                                        label="Currency"
+                                        onChange={(e) => setAccountForm({ ...accountForm, currency: e.target.value })}
+                                    >
+                                        <MenuItem value="NGN">NGN (₦)</MenuItem>
+                                        <MenuItem value="USD">USD ($)</MenuItem>
+                                        <MenuItem value="GBP">GBP (£)</MenuItem>
+                                        <MenuItem value="EUR">EUR (€)</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            <Grid size={{ xs: 12 }}>
+                                <TextField
+                                    fullWidth
+                                    size="small"
+                                    label="Account Name"
+                                    placeholder="e.g., JOHN DOE"
+                                    value={accountForm.account_name}
+                                    onChange={(e) => setAccountForm({ ...accountForm, account_name: e.target.value })}
+                                    required
+                                />
+                            </Grid>
+                            <Grid size={{ xs: 12 }}>
+                                <TextField
+                                    fullWidth
+                                    size="small"
+                                    label="Account Number"
+                                    placeholder="e.g., 0037782389"
+                                    value={accountForm.account_number}
+                                    onChange={(e) => setAccountForm({ ...accountForm, account_number: e.target.value })}
+                                    required
+                                />
+                            </Grid>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                <TextField
+                                    fullWidth
+                                    size="small"
+                                    label="Sort Code (Optional)"
+                                    placeholder="e.g., 12-34-56"
+                                    value={accountForm.sort_code}
+                                    onChange={(e) => setAccountForm({ ...accountForm, sort_code: e.target.value })}
+                                />
+                            </Grid>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                <FormControl fullWidth size="small">
+                                    <InputLabel>Country Code</InputLabel>
+                                    <Select
+                                        value={accountForm.country_code}
+                                        label="Country Code"
+                                        onChange={(e) => setAccountForm({ ...accountForm, country_code: e.target.value })}
+                                    >
+                                        <MenuItem value="NG">Nigeria (NG)</MenuItem>
+                                        <MenuItem value="US">United States (US)</MenuItem>
+                                        <MenuItem value="UK">United Kingdom (UK)</MenuItem>
+                                        <MenuItem value="GH">Ghana (GH)</MenuItem>
+                                        <MenuItem value="KE">Kenya (KE)</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                        </Grid>
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={() => {
+                            setAccountDialogOpen(false)
+                            resetAccountForm()
+                        }}
+                        disabled={savingAccount}
+                    >
+                        Cancel
+                    </Button>
+                    <LoadingButton
+                        loading={savingAccount}
+                        onClick={editingAccountId ? handleUpdateAccount : handleCreateAccount}
+                        variant="contained"
+                        disabled={!accountForm.account_name || !accountForm.account_number}
+                    >
+                        {editingAccountId ? 'Update Account' : 'Create Account'}
+                    </LoadingButton>
+                </DialogActions>
+            </Dialog>
+
+            {/* Edit Cycle Dialog */}
+            <Dialog
+                open={editCycleOpen}
+                onClose={() => {
+                    if (!updatingCycle) {
+                        setEditCycleOpen(false)
+                    }
+                }}
+                maxWidth="md"
+                fullWidth
+                PaperProps={{
+                    sx: { maxHeight: '90vh' }
+                }}
+            >
+                <DialogTitle>
+                    <Typography variant="h5" className="font-bold">
+                        Edit Cycle
+                    </Typography>
+                    {cycle && (
+                        <Chip
+                            label={`${cycle.product_type?.charAt(0).toUpperCase() + cycle.product_type?.slice(1)} Cycle`}
+                            color={cycle.product_type === 'thrift' ? 'primary' : cycle.product_type === 'contribution' ? 'success' : 'secondary'}
+                            variant="filled"
+                            size="small"
+                            className="mt-2"
+                        />
+                    )}
+                </DialogTitle>
+                <DialogContent dividers>
+                    <div className="space-y-6">
+                        <div>
+                            <Typography variant="h6" className="font-semibold mb-4">
+                                Basic Details
+                            </Typography>
+                            <Grid container spacing={3}>
+                                <Grid size={{ xs: 12 }}>
+                                    <TextField
+                                        fullWidth
+                                        label="Cycle Name"
+                                        value={editCycleForm.cycle_name}
+                                        onChange={(e) => setEditCycleForm({ ...editCycleForm, cycle_name: e.target.value })}
+                                        required
+                                    />
+                                </Grid>
+                                {editCycleForm.product_type !== 'contribution' && (
+                                    <Grid size={{ xs: 12, sm: 6 }}>
+                                        <FormControl fullWidth>
+                                            <InputLabel>Payment Frequency</InputLabel>
+                                            <Select
+                                                value={editCycleForm.payment_frequency}
+                                                label="Payment Frequency"
+                                                onChange={(e) => setEditCycleForm({ ...editCycleForm, payment_frequency: e.target.value })}
+                                            >
+                                                <MenuItem value="daily">Daily</MenuItem>
+                                                <MenuItem value="weekly">Weekly</MenuItem>
+                                                <MenuItem value="monthly">Monthly</MenuItem>
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
+                                )}
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <TextField
+                                        fullWidth
+                                        type="number"
+                                        label="Total Slots"
+                                        value={editCycleForm.total_slot}
+                                        onChange={(e) => setEditCycleForm({ ...editCycleForm, total_slot: e.target.value })}
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <FormControl fullWidth>
+                                        <InputLabel>Currency</InputLabel>
+                                        <Select
+                                            value={editCycleForm.currency}
+                                            label="Currency"
+                                            onChange={(e) => setEditCycleForm({ ...editCycleForm, currency: e.target.value })}
+                                        >
+                                            <MenuItem value="NGN">NGN (₦)</MenuItem>
+                                            <MenuItem value="USD">USD ($)</MenuItem>
+                                            <MenuItem value="GBP">GBP (£)</MenuItem>
+                                            <MenuItem value="EUR">EUR (€)</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+                                {editCycleForm.product_type !== 'thrift' && (
+                                    <Grid size={{ xs: 12, sm: 6 }}>
+                                        <TextField
+                                            fullWidth
+                                            type="number"
+                                            label="Minimum Amount"
+                                            value={editCycleForm.min_amount}
+                                            onChange={(e) => setEditCycleForm({ ...editCycleForm, min_amount: e.target.value })}
+                                        />
+                                    </Grid>
+                                )}
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <TextField
+                                        fullWidth
+                                        type="number"
+                                        label="Saving Amount"
+                                        value={editCycleForm.saving_amount}
+                                        onChange={(e) => setEditCycleForm({ ...editCycleForm, saving_amount: e.target.value })}
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <TextField
+                                        fullWidth
+                                        type="date"
+                                        label="Expected Start Date"
+                                        value={editCycleForm.expected_start_date}
+                                        onChange={(e) => setEditCycleForm({ ...editCycleForm, expected_start_date: e.target.value })}
+                                        slotProps={{ inputLabel: { shrink: true } }}
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 12 }}>
+                                    <TextField
+                                        fullWidth
+                                        multiline
+                                        rows={3}
+                                        label="Announcement"
+                                        value={editCycleForm.announcement}
+                                        onChange={(e) => setEditCycleForm({ ...editCycleForm, announcement: e.target.value })}
+                                    />
+                                </Grid>
+                            </Grid>
+                        </div>
+                    </div>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setEditCycleOpen(false)} disabled={updatingCycle}>
+                        Cancel
+                    </Button>
+                    <LoadingButton
+                        loading={updatingCycle}
+                        variant="contained"
+                        onClick={handleUpdateCycle}
+                    >
+                        Update Cycle
                     </LoadingButton>
                 </DialogActions>
             </Dialog>
