@@ -26,13 +26,13 @@ const VerticalMenu = ({ scrollMenu }: Props) => {
     <ScrollWrapper
       {...(isBreakpointReached
         ? {
-            className: 'bs-full overflow-y-auto overflow-x-hidden',
-            onScroll: container => scrollMenu(container, false)
-          }
+          className: 'bs-full overflow-y-auto overflow-x-hidden',
+          onScroll: container => scrollMenu(container, false)
+        }
         : {
-            options: { wheelPropagation: false, suppressScrollX: true },
-            onScrollY: container => scrollMenu(container, true)
-          })}
+          options: { wheelPropagation: false, suppressScrollX: true },
+          onScrollY: container => scrollMenu(container, true)
+        })}
     >
       <Menu
         popoutMenuOffset={{ mainAxis: 17 }}
@@ -60,8 +60,8 @@ const VerticalMenu = ({ scrollMenu }: Props) => {
           All Klicks
         </MenuItem>
 
-        <MenuItem className='!mb-4' icon={<i className='ri-team-line text-xl' />} href={`/dashboards/members`}>
-          Members
+        <MenuItem className='!mb-4' icon={<i className='ri-bank-line text-xl' />} href={`/dashboards/accounts`}>
+          Accounts
         </MenuItem>
 
         <MenuItem

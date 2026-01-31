@@ -68,6 +68,18 @@ export default function KlickList() {
     setTimeout(() => setCopiedId(null), 1500)
   }
 
+  const illustrations = [
+    '/images/illustrations/characters-with-objects/1.png',
+    '/images/illustrations/characters-with-objects/2.png',
+    '/images/illustrations/objects/pricing-basic.png',
+    '/images/illustrations/objects/pricing-enterprise.png',
+    '/images/illustrations/objects/pricing-standard.png'
+  ]
+
+  const getIllustration = (id: number) => {
+    return illustrations[id % illustrations.length]
+  }
+
   // Filter klicks based on search
   const filteredKlicks = klicks.filter(klick =>
     klick.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -132,111 +144,65 @@ export default function KlickList() {
       ) : (
         <Grid container spacing={3}>
           {filteredKlicks.map(klick => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={klick.id}>
+            <Grid size={{ xs: 12, md: 6 }} key={klick.id}>
               <Card
+                onClick={() => router.push(`/dashboards/view-klicks/${klick.id}`)}
+                className='relative overflow-hidden cursor-pointer group transition-all duration-300 hover:shadow-lg'
                 variant='outlined'
                 sx={{
-                  borderColor: 'primary.main',
-                  borderWidth: 2,
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'all 0.3s ease',
+                  borderColor: 'divider',
                   '&:hover': {
-                    borderColor: 'primary.dark',
-                    boxShadow: 4,
+                    borderColor: 'primary.main',
                     transform: 'translateY(-4px)'
                   }
                 }}
               >
-                <CardContent className='flex-1 p-5 space-y-3'>
-                  {/* Header with Name and Admin Badge */}
-                  <div className='flex items-start justify-between gap-2 mb-2'>
-                    <Typography variant='h6' className='font-bold' color='primary.main' sx={{ lineHeight: 1.3 }}>
-                      {klick.name}
-                    </Typography>
-                    {klick.is_admin && (
-                      <Chip label='Admin' size='small' color='secondary' variant='filled' />
-                    )}
-                  </div>
+                <CardContent className='p-0 h-full'>
+                  <div className='flex h-full'>
+                    {/* Left Content */}
+                    <div className='flex-1 p-5 flex flex-col justify-between z-10'>
+                      <div>
+                        {klick.is_admin && (
+                          <Chip
+                            label='Admin'
+                            size='small'
+                            color='primary'
+                            variant='tonal'
+                            className='mb-2'
+                            sx={{ height: 20, fontSize: '0.75rem' }}
+                          />
+                        )}
+                        <Typography variant='h6' className='font-bold mb-1 line-clamp-1'>
+                          {klick.name}
+                        </Typography>
+                        <Typography variant='body2' color='text.secondary' className='mb-3 line-clamp-2'>
+                          {klick.description || 'No description available'}
+                        </Typography>
+                      </div>
 
-                  <Divider />
+                      <div className='mt-auto'>
+                        <div className='flex items-center gap-2 text-primary font-medium group-hover:underline'>
+                          <Typography variant='body2' color='inherit' className='font-bold'>
+                            View Klick
+                          </Typography>
+                          <i className='ri-arrow-right-line transition-transform group-hover:translate-x-1' />
+                        </div>
+                      </div>
+                    </div>
 
-                  {/* Announcement */}
-                  {klick.announcement ? (
-                    <Box sx={{ bgcolor: 'primary.lighter', p: 2, borderRadius: 2 }}>
-                      <Typography variant='caption' sx={{ fontWeight: 600, color: 'primary.dark' }} className='flex items-center gap-1 mb-1'>
-                        <i className='ri-megaphone-line' />
-                        Announcement
-                      </Typography>
-                      <Typography variant='body2' sx={{ color: 'primary.dark' }} className='line-clamp-2'>
-                        {klick.announcement}
-                      </Typography>
-                    </Box>
-                  ) : (
-                    <Typography variant='body2' color='text.secondary' className='italic'>
-                      No announcement
-                    </Typography>
-                  )}
+                    {/* Right Content - Illustration */}
+                    <div className='w-1/3 min-w-[120px] relative flex items-center justify-center bg-gray-50/50 p-2'>
+                      {/* Decorative Background Circle */}
+                      <div className='absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 w-32 h-32 rounded-full bg-primary/5' />
 
-                  {/* WhatsApp Link */}
-                  <div className='flex items-center gap-2'>
-                    <i className='ri-whatsapp-line text-xl text-success' />
-                    <Button
-                      variant='text'
-                      size='small'
-                      href={klick.whatsapp_group_link}
-                      target='_blank'
-                      sx={{ padding: 0, minWidth: 'auto', textTransform: 'none' }}
-                    >
-                      Open WhatsApp Group
-                    </Button>
-                  </div>
-
-                  {/* Invite Link */}
-                  <div className='bg-gray-50 p-3 rounded-lg'>
-                    <Typography variant='caption' className='font-semibold text-gray-700 flex items-center gap-1 mb-1'>
-                      <i className='ri-link' />
-                      Invite Link
-                    </Typography>
-                    <div className='flex items-center gap-2'>
-                      <Typography variant='caption' className='font-mono text-xs text-gray-600 truncate flex-1'>
-                        {klick.invite_url}
-                      </Typography>
-                      <Tooltip title={copiedId === klick.id ? 'Copied!' : 'Copy link'}>
-                        <IconButton
-                          size='small'
-                          onClick={() => copyToClipboard(klick.invite_url, klick.id)}
-                          sx={{ padding: '4px' }}
-                        >
-                          <i className={copiedId === klick.id ? 'ri-check-line text-success' : 'ri-file-copy-line'} />
-                        </IconButton>
-                      </Tooltip>
+                      <img
+                        src={getIllustration(klick.id)}
+                        alt='Klick Illustration'
+                        className='relative z-10 w-full h-auto object-contain max-h-[140px] drop-shadow-sm transition-transform duration-300 group-hover:scale-110'
+                      />
                     </div>
                   </div>
-
-                  {/* Member Count if available */}
-                  {klick.member_count !== undefined && (
-                    <div className='flex items-center gap-2 text-gray-600'>
-                      <i className='ri-user-3-line' />
-                      <Typography variant='body2'>
-                        {klick.member_count} member{klick.member_count !== 1 ? 's' : ''}
-                      </Typography>
-                    </div>
-                  )}
                 </CardContent>
-
-                {/* View Button */}
-                <Box className='p-4 pt-0'>
-                  <Button
-                    variant='contained'
-                    fullWidth
-                    color='primary'
-                    onClick={() => router.push(`/dashboards/view-klicks/${klick.id}`)}
-                  >
-                    View Details
-                  </Button>
-                </Box>
               </Card>
             </Grid>
           ))}

@@ -20,6 +20,8 @@ import ModeDropdown from '@components/layout/shared/ModeDropdown'
 import ShortcutsDropdown from '@components/layout/shared/ShortcutsDropdown'
 import NotificationsDropdown from '@components/layout/shared/NotificationsDropdown'
 import UserDropdown from '@components/layout/shared/UserDropdown'
+import { useAuth } from '@/components/AuthContext'
+import Typography from '@mui/material/Typography'
 
 // Util Imports
 import { verticalLayoutClasses } from '@layouts/utils/layoutClasses'
@@ -88,6 +90,7 @@ const notifications: NotificationsType[] = [
 ]
 
 const NavbarContent = () => {
+  const { user } = useAuth()
   const [searchValue, setSearchValue] = useState('')
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -171,6 +174,11 @@ const NavbarContent = () => {
         </Box>
       </div>
       <div className='flex items-center gap-1'>
+        {user?.first_name && (
+          <Typography className='mr-4 font-semibold hidden sm:block' color='text.primary'>
+            Welcome {user.first_name}
+          </Typography>
+        )}
         {/* <LanguageDropdown /> */}
         <ShortcutsDropdown shortcuts={shortcuts} />
         <NotificationsDropdown notifications={notifications} />

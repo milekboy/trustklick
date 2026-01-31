@@ -712,9 +712,19 @@ export default function SingleKlickPage() {
   const handleProductTypeSelect = (productType: 'thrift' | 'contribution' | 'investment') => {
     setSelectedProductType(productType)
     setCycleForm({
-      ...cycleForm,
+      cycle_name: '',
       product_type: productType,
-      payment_frequency: productType === 'contribution' ? 'one-off' : 'monthly'
+      payment_frequency: productType === 'contribution' ? 'one-off' : 'monthly',
+      currency: 'NGN',
+      min_amount: '',
+      saving_amount: '',
+      total_slot: '',
+      payment_type: productType === 'thrift' ? 'fixed' : productType === 'contribution' ? 'flexible' : 'fixed',
+      expected_start_date: '',
+      preffered_payment_period: '',
+      invite_ref: '',
+      announcement: '',
+      disbursement_structure: 'individual'
     })
     setCreateCycleOpen(true)
   }
@@ -903,10 +913,16 @@ export default function SingleKlickPage() {
               <Button
                 variant='contained'
                 onClick={() => {
+                  const shareText = `You have been invited to Join ${klick.name} on TrustKlick. Simply click link below and begin to experience a new great adventure on saving.`
                   if (navigator.share) {
-                    navigator.share({ url: klick.invite_url, title: `Join ${klick.name}` })
+                    navigator.share({
+                      title: `Join ${klick.name}`,
+                      text: shareText,
+                      url: klick.invite_url
+                    })
                   } else {
-                    copyInvite()
+                    navigator.clipboard.writeText(`${shareText} ${klick.invite_url}`)
+                    setToast({ message: 'Invite message copied to clipboard', type: 'success' })
                   }
                 }}
                 startIcon={<i className='ri-share-line' />}
@@ -941,7 +957,7 @@ export default function SingleKlickPage() {
           ) : (
             <Alert severity='info' icon={<i className='ri-information-line' />} className='mt-4'>
               <AlertTitle className='font-semibold'>No Announcement</AlertTitle>
-              There are no announcements for this Klick at the moment.
+              There are no announcements for this Klick at the moment. (Edit Klick to update Announcement)
             </Alert>
           )}
         </CardContent>
@@ -1633,7 +1649,64 @@ export default function SingleKlickPage() {
                     </Button>
                   </Grid>
                 </Grid>
+
               </Card>
+
+              {/* Pending Invites List */}
+              <div className='mt-8'>
+                <Typography variant='h6' className='font-semibold mb-4'>
+                  Pending Invites ({joinRequests.length})
+                </Typography>
+                {joinRequests.length === 0 ? (
+                  <Card variant='outlined' className='p-6 text-center'>
+                    <Typography variant='body2' color='text.secondary'>
+                      No pending invites.
+                    </Typography>
+                  </Card>
+                ) : (
+                  <Card variant='outlined'>
+                    <List className='p-0'>
+                      {joinRequests.map((request, index) => (
+                        <div key={request.id}>
+                          <ListItem className='py-3'>
+                            <ListItemAvatar>
+                              <CustomAvatar skin='light' color='info' size={42}>
+                                {getInitials(`${request.user.first_name} ${request.user.last_name}`)}
+                              </CustomAvatar>
+                            </ListItemAvatar>
+                            <ListItemText
+                              primary={
+                                <div className='flex items-center gap-2'>
+                                  <Typography className='font-medium'>
+                                    {request.user.first_name} {request.user.last_name}
+                                  </Typography>
+                                  <Chip label='Pending' size='small' color='warning' variant='tonal' />
+                                </div>
+                              }
+                              secondary={request.user.email}
+                            />
+                            {isAdmin && (
+                              <ListItemSecondaryAction>
+                                <div className='flex items-center gap-2'>
+                                  <IconButton
+                                    size='small'
+                                    color='error'
+                                    onClick={() => handleDeclineRequest(request.id)}
+                                    title='Revoke Invite'
+                                  >
+                                    <i className='ri-close-line' />
+                                  </IconButton>
+                                </div>
+                              </ListItemSecondaryAction>
+                            )}
+                          </ListItem>
+                          {index < joinRequests.length - 1 && <Divider />}
+                        </div>
+                      ))}
+                    </List>
+                  </Card>
+                )}
+              </div>
             </TabPanel>
           </CardContent >
         </TabContext >
@@ -1840,6 +1913,7 @@ export default function SingleKlickPage() {
                         <MenuItem value='USD'>USD ($)</MenuItem>
                         <MenuItem value='GBP'>GBP (£)</MenuItem>
                         <MenuItem value='EUR'>EUR (€)</MenuItem>
+                        <MenuItem value='CAD'>CAD (C$)</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>
@@ -2063,14 +2137,15 @@ export default function SingleKlickPage() {
                                       value={allocation.member ? allocation.member.id : ''}
                                       label='Member'
                                       onChange={e => {
-                                        const member = members.find(m => m.id === e.target.value)
+                                        const allParticipants = members.concat(joinRequests)
+                                        const member = allParticipants.find(m => m.id === e.target.value)
                                         handleUpdateAllocationMember(slot.slotNumber, allocation.id, member || null)
                                       }}
                                     >
                                       <MenuItem value=''>
                                         <em>Select Member</em>
                                       </MenuItem>
-                                      {members.map(member => (
+                                      {members.concat(joinRequests).map(member => (
                                         <MenuItem
                                           key={member.id}
                                           value={member.id}
@@ -2079,7 +2154,7 @@ export default function SingleKlickPage() {
                                             member.user.id !== allocation.member?.user.id
                                           }
                                         >
-                                          {member.user.first_name} {member.user.last_name}
+                                          {member.user.first_name} {member.user.last_name} {member.status !== 'approved' ? '(Pending)' : ''}
                                         </MenuItem>
                                       ))}
                                     </Select>
@@ -2145,7 +2220,7 @@ export default function SingleKlickPage() {
                     <TextField
                       fullWidth
                       type='number'
-                      label={selectedProductType === 'contribution' ? 'Target Amount (Optional)' : 'Minimum Amount'}
+                      label='Minimum Amount'
                       value={cycleForm.min_amount}
                       onChange={e => setCycleForm({ ...cycleForm, min_amount: e.target.value })}
                       InputProps={{
@@ -2166,19 +2241,22 @@ export default function SingleKlickPage() {
                     }}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormControl fullWidth>
-                    <InputLabel>Payment Type</InputLabel>
-                    <Select
-                      value={cycleForm.payment_type}
-                      label='Payment Type'
-                      onChange={e => setCycleForm({ ...cycleForm, payment_type: e.target.value })}
-                    >
-                      <MenuItem value='fixed'>Fixed</MenuItem>
-                      <MenuItem value='flexible'>Flexible</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
+                {/* Payment Type - Hidden for Thrift */}
+                {selectedProductType !== 'thrift' && (
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <FormControl fullWidth>
+                      <InputLabel>Payment Type</InputLabel>
+                      <Select
+                        value={cycleForm.payment_type}
+                        label='Payment Type'
+                        onChange={e => setCycleForm({ ...cycleForm, payment_type: e.target.value })}
+                      >
+                        <MenuItem value='fixed'>Fixed</MenuItem>
+                        <MenuItem value='flexible'>Flexible</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                )}
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
