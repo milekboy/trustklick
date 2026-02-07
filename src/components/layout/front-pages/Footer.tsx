@@ -74,10 +74,10 @@ const Footer = () => {
                 <Typography component={Link} href='/front-pages/landing-page#features' color='white' className='opacity-[0.78] hover:opacity-[1]'>
                   Features
                 </Typography>
-                <Typography component={Link} href='/front-pages/pricing' color='white' className='opacity-[0.78] hover:opacity-[1]'>
-                  Pricing
+                <Typography component={Link} href='/front-pages/landing-page#faq' color='white' className='opacity-[0.78] hover:opacity-[1]'>
+                  Faq
                 </Typography>
-                <Typography component={Link} href='/login' color='white' className='opacity-[0.78] hover:opacity-[1]'>
+                <Typography component={Link} href='/pages/auth/login-v2' color='white' className='opacity-[0.78] hover:opacity-[1]'>
                   Login
                 </Typography>
               </div>
@@ -87,16 +87,14 @@ const Footer = () => {
                 Company
               </Typography>
               <div className='flex flex-col gap-4'>
-                <Typography component={Link} href='/active-cycle' color='white' className='opacity-[0.78] hover:opacity-[1]'>
-                  Active Cycles
-                </Typography>
-                <Typography component={Link} href='/about-us' color='white' className='opacity-[0.78] hover:opacity-[1]'>
+
+                <Typography component={Link} href='/front-pages/about-us' color='white' className='opacity-[0.78] hover:opacity-[1]'>
                   About Us
                 </Typography>
-                <Typography component={Link} href='/contact-us' color='white' className='opacity-[0.78] hover:opacity-[1]'>
+                <Typography component={Link} href='/front-pages/contact-us' color='white' className='opacity-[0.78] hover:opacity-[1]'>
                   Contact Us
                 </Typography>
-                <Typography component={Link} href='/privacy' color='white' className='opacity-[0.78] hover:opacity-[1]'>
+                <Typography component={Link} href='/front-pages/privacy-policy' color='white' className='opacity-[0.78] hover:opacity-[1]'>
                   Privacy Policy
                 </Typography>
               </div>

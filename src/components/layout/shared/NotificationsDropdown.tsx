@@ -46,28 +46,28 @@ export type NotificationsType = {
   time: string
   read: boolean
 } & (
-  | {
+    | {
       avatarImage?: string
       avatarIcon?: never
       avatarText?: never
       avatarColor?: never
       avatarSkin?: never
     }
-  | {
+    | {
       avatarIcon?: string
       avatarColor?: ThemeColor
       avatarSkin?: CustomAvatarProps['skin']
       avatarImage?: never
       avatarText?: never
     }
-  | {
+    | {
       avatarText?: string
       avatarColor?: ThemeColor
       avatarSkin?: CustomAvatarProps['skin']
       avatarImage?: never
       avatarIcon?: never
     }
-)
+  )
 
 const ScrollWrapper = ({ children, hidden }: { children: ReactNode; hidden: boolean }) => {
   if (hidden) {
@@ -193,16 +193,16 @@ const NotificationDropdown = ({ notifications }: { notifications: NotificationsT
         anchorEl={anchorRef.current}
         {...(isSmallScreen
           ? {
-              className: 'is-full !mbs-4 z-[1] max-bs-[550px] bs-[550px]',
-              modifiers: [
-                {
-                  name: 'preventOverflow',
-                  options: {
-                    padding: themeConfig.layoutPadding
-                  }
+            className: 'is-full !mbs-4 z-[1] max-bs-[550px] bs-[550px]',
+            modifiers: [
+              {
+                name: 'preventOverflow',
+                options: {
+                  padding: themeConfig.layoutPadding
                 }
-              ]
-            }
+              }
+            ]
+          }
           : { className: 'is-96 !mbs-4 z-[1] max-bs-[550px] bs-[550px]' })}
       >
         {({ TransitionProps, placement }) => (
@@ -284,10 +284,7 @@ const NotificationDropdown = ({ notifications }: { notifications: NotificationsT
                                 'invisible group-hover:visible': read
                               })}
                             />
-                            <i
-                              className='ri-close-line text-xl invisible group-hover:visible text-textSecondary'
-                              onClick={e => handleRemoveNotification(e, index)}
-                            />
+
                           </div>
                         </div>
                       )

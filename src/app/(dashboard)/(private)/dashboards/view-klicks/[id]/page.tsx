@@ -904,10 +904,19 @@ export default function SingleKlickPage() {
               >
                 Edit Klick
               </Button>
+              {isAdmin && (
+                <Button
+                  variant='contained'
+                  startIcon={<i className='ri-add-line' />}
+                  onClick={() => setProductTypeSelectionOpen(true)}
+                >
+                  Create Cycle
+                </Button>
+              )}
               <Tooltip title={copied ? 'Copied!' : 'Copy invite URL'}>
-                <IconButton onClick={copyInvite}>
-                  <i className='ri-file-copy-line text-xl' />
-                </IconButton>
+                <Button variant='text' onClick={copyInvite} startIcon={<i className='ri-file-copy-line' />}>
+                  {copied ? 'Copied!' : 'Copy Link'}
+                </Button>
               </Tooltip>
 
               <Button

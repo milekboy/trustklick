@@ -126,18 +126,13 @@ const UserDropdown = () => {
                     <Avatar alt={session?.user?.name || ''} src={session?.user?.image || ''} />
                     <div className='flex items-start flex-col'>
                       <Typography variant='body2' className='font-medium' color='text.primary'>
-                        {session?.user?.name || ''}
+                        {`${user?.first_name || ''} ${user?.last_name || ''}`.trim()}
                       </Typography>
                       <Typography variant='caption'>{session?.user?.email || ''}</Typography>
                     </div>
                   </div>
                   <Divider className='mlb-1' />
-                  <MenuItem className='gap-3 pli-4' onClick={e => handleDropdownClose(e, '/pages/user-profile')}>
-                    <i className='ri-user-3-line' />
-                    <Typography color='text.primary'>
-                      {`${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Profile'}
-                    </Typography>
-                  </MenuItem>
+
                   <MenuItem className='gap-3 pli-4' onClick={e => handleDropdownClose(e, '/pages/account-settings')}>
                     <i className='ri-mail-line' />
                     <Typography color='text.primary'>{user?.email || ''}</Typography>

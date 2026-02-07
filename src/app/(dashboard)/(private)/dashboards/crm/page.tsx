@@ -49,30 +49,30 @@ const DashboardCRM = async () => {
       </Grid>
 
       {/* Row 3: Contribution Trends (Full Width) */}
-      <Grid size={{ xs: 12 }}>
+      {/* <Grid size={{ xs: 12 }}>
         <ContributionTrends />
-      </Grid>
+      </Grid> */}
 
       {/* Row 4: Recent Contributions and Active Cycles */}
-      <Grid size={{ xs: 12, md: 12 }}>
+      {/* <Grid size={{ xs: 12, md: 12 }}>
         <RecentContributions />
-      </Grid>
+      </Grid> */}
       {/* <Grid size={{ xs: 12, md: 4 }}>
         <ActiveCycles />
       </Grid> */}
 
       {/* Row 5: Member Statistics and Quick Actions */}
-      <Grid size={{ xs: 12, md: 12 }}>
+      {/* <Grid size={{ xs: 12, md: 12 }}>
         <MemberStatistics />
-      </Grid>
+      </Grid> */}
       {/* <Grid size={{ xs: 12, md: 6 }}>
         <QuickActions />
       </Grid> */}
 
       {/* Row 6: Activity Timeline (Full Width) */}
-      <Grid size={{ xs: 12 }}>
+      {/* <Grid size={{ xs: 12 }}>
         <ContributionTimeline />
-      </Grid>
+      </Grid> */}
     </Grid>
   )
 }

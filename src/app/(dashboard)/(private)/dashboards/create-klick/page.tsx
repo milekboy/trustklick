@@ -311,55 +311,7 @@ export default function CreateKlick() {
                   </Grid>
 
                   {/* Total Shares and Share Value */}
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Typography variant='body2' className='font-semibold mb-2 flex items-center gap-2'>
-                      <i className='ri-pie-chart-line text-lg text-info' />
-                      Total Shares
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      type='number'
-                      name='total_shares'
-                      label='Total shares'
-                      placeholder='e.g., 1000000'
-                      value={formData.total_shares}
-                      onChange={handleChange}
-                      slotProps={{
-                        input: {
-                          startAdornment: (
-                            <InputAdornment position='start'>
-                              <i className='ri-pie-chart-line text-xl text-info' />
-                            </InputAdornment>
-                          )
-                        }
-                      }}
-                    />
-                  </Grid>
 
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Typography variant='body2' className='font-semibold mb-2 flex items-center gap-2'>
-                      <i className='ri-money-dollar-circle-line text-lg text-info' />
-                      Share Value
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      type='number'
-                      name='share_value'
-                      label='Value per share'
-                      placeholder='e.g., 1'
-                      value={formData.share_value}
-                      onChange={handleChange}
-                      slotProps={{
-                        input: {
-                          startAdornment: (
-                            <InputAdornment position='start'>
-                              <i className='ri-money-dollar-circle-line text-xl text-info' />
-                            </InputAdornment>
-                          )
-                        }
-                      }}
-                    />
-                  </Grid>
 
                   {/* Type */}
                   <Grid size={{ xs: 12 }}>

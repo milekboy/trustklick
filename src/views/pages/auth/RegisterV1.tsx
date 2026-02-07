@@ -271,6 +271,12 @@ const RegisterV1 = ({ mode }: { mode: Mode }) => {
             <Button fullWidth variant='contained' type='submit' disabled={loading}>
               {loading ? 'Signing up...' : 'Sign Up'}
             </Button>
+            <div className='flex justify-center items-center flex-wrap gap-2'>
+              <Typography>Already have an account?</Typography>
+              <Link href='/pages/auth/login-v2' className='text-primary'>
+                Login Here
+              </Link>
+            </div>
           </form>
         </CardContent>
       </Card>

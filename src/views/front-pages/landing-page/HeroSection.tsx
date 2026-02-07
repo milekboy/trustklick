@@ -57,7 +57,7 @@ const HeroSection = ({ mode }: { mode: Mode }) => {
             <Button
               component={Link}
               size='large'
-              href='/register'
+              href='/pages/auth/register-v1'
               variant='contained'
               color='primary'
             >

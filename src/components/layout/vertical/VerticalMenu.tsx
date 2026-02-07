@@ -64,17 +64,9 @@ const VerticalMenu = ({ scrollMenu }: Props) => {
           Accounts
         </MenuItem>
 
-        <MenuItem
-          className='!mb-4'
-          icon={<i className='ri-timer-flash-line text-xl' />}
-          href={`/dashboards/cycles/start`}
-        >
-          Start Cycle
-        </MenuItem>
 
-        <MenuItem className='!mb-4' icon={<i className='ri-settings-3-line text-xl' />} href={`/dashboards/settings`}>
-          Settings
-        </MenuItem>
+
+
 
         <MenuItem
           className='!mb-4'
