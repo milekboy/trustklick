@@ -144,6 +144,7 @@ export default function SingleKlickPage() {
   const [cycles, setCycles] = useState<CycleType[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
+  const [cycleFilter, setCycleFilter] = useState('all')
   const [copied, setCopied] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
 
@@ -884,842 +885,1013 @@ export default function SingleKlickPage() {
       )}
 
       {/* Header Card with Announcement */}
-      <Card>
-        <CardContent className='p-6'>
-          <div className='flex items-center justify-between flex-wrap gap-4 mb-4'>
-            <div className='flex-1 min-w-[200px]'>
-              <div className='flex items-center gap-3 mb-2'>
-                <Typography variant='h4' className='font-bold'>
-                  {klick.name}
-                </Typography>
-                {isAdmin && <Chip label='Admin' color='primary' size='small' />}
-              </div>
-            </div>
+      <Card className='overflow-hidden'>
+        <div className='flex flex-col md:flex-row'>
+          {/* Left Side - Cloudy Image Container */}
+          <div
+            className='w-full md:w-[35%] relative min-h-[250px] overflow-hidden'
+            style={{
+              backgroundColor: 'rgba(103, 58, 183, 0.08)',
+              borderBottomRightRadius: '150px' // Curve on the right as requested
+            }}
+          >
+            {/* Organic Cloud Shapes */}
+            <div
+              className='absolute top-[-20%] -left-[20%] w-[100%] h-[100%] rounded-full pointer-events-none'
+              style={{
+                backgroundColor: 'rgba(103, 58, 183, 0.25)',
+                filter: 'blur(50px)',
+                borderRadius: '30% 70% 70% 30% / 30% 30% 70% 70%'
+              }}
+            />
+            <div
+              className='absolute bottom-[-10%] -right-[10%] w-[80%] h-[80%] rounded-full pointer-events-none'
+              style={{
+                backgroundColor: 'rgba(156, 39, 176, 0.2)',
+                filter: 'blur(40px)',
+                borderRadius: '60% 40% 30% 70% / 60% 30% 70% 40%'
+              }}
+            />
 
-            <div className='flex gap-2'>
-              <Button
-                variant='outlined'
-                startIcon={<i className='ri-edit-line' />}
-                onClick={openEditKlickDialog}
-              >
-                Edit Klick
-              </Button>
-              {isAdmin && (
+            <div className='absolute inset-0 flex items-center justify-center p-6 z-10'>
+              <img
+                src={`/images/illustrations/characters-with-objects/${(Number(id) % 2) + 1}.png`} // Simple illustration logic based on ID
+                alt='Klick Illustration'
+                className='w-full h-full object-contain max-h-[200px] drop-shadow-xl'
+              />
+            </div>
+          </div>
+
+          {/* Right Side - Content */}
+          <div className='flex-1 p-6 flex flex-col justify-center'>
+            <div className='flex justify-between items-start gap-4 mb-2'>
+              <div>
+                <div className='flex items-center gap-3'>
+                  <Typography variant='h3' className='font-bold text-primary'>
+                    {klick.name}
+                  </Typography>
+                  {isAdmin && <Chip label='Admin' color='primary' size='small' className='text-xs' />}
+                </div>
+                <Typography variant='body1' color='text.secondary' className='mt-1 font-medium'>
+                  Monthly Contributions • {members.length} Members
+                </Typography>
+              </div>
+
+              {/* Action Buttons */}
+              <div className='flex gap-2 flex-wrap justify-end'>
+                {cycles.some(c => c.status === 'running') && (
+                  <Chip
+                    icon={<i className='ri-rocket-line' />}
+                    label='Cycle Ongoing'
+                    color='primary'
+                    variant='outlined'
+                    className='mr-2'
+                  />
+                )}
+
                 <Button
                   variant='contained'
-                  startIcon={<i className='ri-add-line' />}
-                  onClick={() => setProductTypeSelectionOpen(true)}
+                  color='primary'
+                  onClick={() => {
+                    const shareText = `You have been invited to Join ${klick.name} on TrustKlick.`
+                    if (navigator.share) {
+                      navigator.share({ title: `Join ${klick.name}`, text: shareText, url: klick.invite_url })
+                    } else {
+                      navigator.clipboard.writeText(`${shareText} ${klick.invite_url}`)
+                      setToast({ message: 'Invite link copied', type: 'success' })
+                    }
+                  }}
+                  startIcon={<i className='ri-share-line' />}
                 >
-                  Create Cycle
+                  Share
                 </Button>
-              )}
-              <Tooltip title={copied ? 'Copied!' : 'Copy invite URL'}>
-                <Button variant='text' onClick={copyInvite} startIcon={<i className='ri-file-copy-line' />}>
-                  {copied ? 'Copied!' : 'Copy Link'}
-                </Button>
-              </Tooltip>
 
-              <Button
-                variant='contained'
-                onClick={() => {
-                  const shareText = `You have been invited to Join ${klick.name} on TrustKlick. Simply click link below and begin to experience a new great adventure on saving.`
-                  if (navigator.share) {
-                    navigator.share({
-                      title: `Join ${klick.name}`,
-                      text: shareText,
-                      url: klick.invite_url
-                    })
-                  } else {
-                    navigator.clipboard.writeText(`${shareText} ${klick.invite_url}`)
-                    setToast({ message: 'Invite message copied to clipboard', type: 'success' })
-                  }
-                }}
-                startIcon={<i className='ri-share-line' />}
-              >
-                Share
-              </Button>
-            </div>
-          </div>
-
-          {/* Announcement Alert */}
-          {klick.announcement ? (
-            <Alert
-              severity='info'
-              icon={<i className='ri-megaphone-line' />}
-              className='mt-4'
-              action={
-                isAdmin ? (
-                  <IconButton
-                    size='small'
-                    color='inherit'
-                    onClick={handleOpenEditAnnouncement}
-                    title='Edit Announcement'
-                  >
-                    <i className='ri-edit-line' />
+                {isAdmin && (
+                  <IconButton size='small' onClick={openEditKlickDialog} title='Edit Klick'>
+                    <i className='ri-settings-3-line' />
                   </IconButton>
-                ) : null
-              }
-            >
-              <AlertTitle className='font-semibold'>Announcement</AlertTitle>
-              {klick.announcement}
-            </Alert>
-          ) : (
-            <Alert severity='info' icon={<i className='ri-information-line' />} className='mt-4'>
-              <AlertTitle className='font-semibold'>No Announcement</AlertTitle>
-              There are no announcements for this Klick at the moment. (Edit Klick to update Announcement)
-            </Alert>
-          )}
-        </CardContent>
+                )}
+              </div>
+            </div>
+
+            {/* Announcement Section */}
+            <div className='mt-6 bg-purple-300 rounded-lg p-4 flex items-start gap-3 relative group shadow-sm'>
+              <div className='mt-1'>
+                <i className='ri-megaphone-fill text-white text-xl' />
+              </div>
+              <div className='flex-1'>
+                {klick.announcement ? (
+                  <Typography variant='body2' className='text-white font-medium mt-2'>
+                    {klick.announcement}
+                  </Typography>
+                ) : (
+                  <Typography variant='body2' className='text-white/80 italic'>
+                    No active announcements.
+                  </Typography>
+                )}
+              </div>
+              {isAdmin && (
+                <IconButton
+                  size='small'
+                  className='absolute top-2 right-2  transition-opacity text-white hover:bg-white/20'
+                  onClick={handleOpenEditAnnouncement}
+                >
+                  <i className='ri-edit-line' />
+                </IconButton>
+              )}
+            </div>
+
+            {/* Secondary Actions Row */}
+            <div className='mt-6 flex gap-3 flex-wrap items-center'>
+              <Button
+                variant='text'
+                size='small'
+                onClick={() => setActiveTab('overview')}
+                className={activeTab === 'overview' ? 'font-bold underline' : ''}
+              >
+                Overview
+              </Button>
+              <Button
+                variant='text'
+                size='small'
+                onClick={() => setActiveTab('members')}
+                className={activeTab === 'members' ? 'font-bold underline' : ''}
+              >
+                Members
+              </Button>
+              {isAdmin && (
+                <>
+                  <Button
+                    variant='outlined'
+                    size='small'
+                    startIcon={<i className='ri-add-line' />}
+                    onClick={() => setProductTypeSelectionOpen(true)}
+                  >
+                    Create Cycle
+                  </Button>
+                  <div className='flex-1' />
+                  <Button
+                    variant='outlined'
+                    size='small'
+                    startIcon={<i className='ri-user-add-line' />}
+                    onClick={() => setActiveTab('invite')}
+                  >
+                    Invite
+                  </Button>
+                </>
+              )}
+            </div>
+
+          </div>
+        </div>
       </Card>
 
-      {/* Main Content with Tabs */}
-      <Card>
-        <TabContext value={activeTab}>
-          <div className='border-b'>
-            <CustomTabList onChange={handleTabChange} variant='scrollable' scrollButtons='auto'>
-              <Tab value='overview' label='Overview' icon={<i className='ri-dashboard-line' />} iconPosition='start' />
-              <Tab
-                value='members'
-                label={`Members (${members.length})`}
-                icon={<i className='ri-group-line' />}
-                iconPosition='start'
-              />
-              <Tab
-                value='cycles'
-                label={`Cycles (${cycles.length})`}
-                icon={<i className='ri-refresh-line' />}
-                iconPosition='start'
-              />
-              {isAdmin && (
-                <Tab
-                  value='invite'
-                  label='Invite new member'
-                  icon={<i className='ri-mail-send-line' />}
-                  iconPosition='start'
-                />
-              )}
-            </CustomTabList>
-          </div>
-
-          <CardContent>
-            {/* Overview Tab */}
-            <TabPanel value='overview' className='space-y-6'>
-              <div>
-                <Typography variant='h6' className='font-semibold mb-4'>
-                  Klick Information
-                </Typography>
-                <Grid container spacing={4}>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Card variant='outlined' className='p-4 h-full'>
-                      <div className='flex items-center gap-2 mb-2'>
-                        <i className='ri-file-text-line text-xl text-primary' />
-                        <Typography variant='body2' color='text.secondary' className='font-medium'>
-                          Description
-                        </Typography>
-                      </div>
-                      <Typography>{klick.description || 'No description provided.'}</Typography>
-                    </Card>
-                  </Grid>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Card variant='outlined' className='p-4 h-full'>
-                      <div className='flex items-center gap-2 mb-2'>
-                        <i className='ri-whatsapp-line text-xl text-success' />
-                        <Typography variant='body2' color='text.secondary' className='font-medium'>
-                          WhatsApp Group
-                        </Typography>
-                      </div>
-                      <Button
-                        variant='outlined'
-                        color='success'
-                        href={klick.whatsapp_group_link}
-                        target='_blank'
-                        startIcon={<i className='ri-external-link-line' />}
-                        className='mt-2'
-                      >
-                        Open Group
-                      </Button>
-                    </Card>
-                  </Grid>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Card variant='outlined' className='p-4 h-full'>
-                      <div className='flex items-center gap-2 mb-2'>
-                        <i className='ri-link text-xl text-info' />
-                        <Typography variant='body2' color='text.secondary' className='font-medium'>
-                          Invite Link
-                        </Typography>
-                      </div>
-                      <div className='flex items-center gap-2 mt-2'>
-                        <Typography variant='body2' className='font-mono text-xs flex-1 truncate'>
-                          {klick.invite_url}
-                        </Typography>
-                        <IconButton size='small' onClick={copyInvite}>
-                          <i className='ri-file-copy-line' />
-                        </IconButton>
-                      </div>
-                    </Card>
-                  </Grid>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Card variant='outlined' className='p-4 h-full'>
-                      <div className='flex items-center gap-2 mb-2'>
-                        <i className='ri-group-line text-xl text-primary' />
-                        <Typography variant='body2' color='text.secondary' className='font-medium'>
-                          Total Members
-                        </Typography>
-                      </div>
-                      <Typography variant='h4' className='font-bold text-primary'>
-                        {members.length}
-                      </Typography>
-                    </Card>
-                  </Grid>
-                </Grid>
+      {/* Main Content Layout */}
+      <Grid container spacing={6}>
+        <Grid size={{ xs: 12, md: 8 }}>
+          <Card>
+            <TabContext value={activeTab}>
+              <div className='border-b'>
+                <CustomTabList onChange={handleTabChange} variant='scrollable' scrollButtons='auto'>
+                  <Tab value='overview' label='Overview' icon={<i className='ri-dashboard-line' />} iconPosition='start' />
+                  <Tab
+                    value='members'
+                    label={`Members (${members.length})`}
+                    icon={<i className='ri-group-line' />}
+                    iconPosition='start'
+                  />
+                  {/* Cycles Tab Removed */}
+                  {isAdmin && (
+                    <Tab
+                      value='invite'
+                      label='Invite new member'
+                      icon={<i className='ri-mail-send-line' />}
+                      iconPosition='start'
+                    />
+                  )}
+                </CustomTabList>
               </div>
 
-              <Divider />
-
-              {/* Active Cycles Section */}
-              {cycles.filter(c => c.status === 'running').length > 0 && (
-                <div>
-                  <div className='flex items-center justify-between mb-4'>
-                    <Typography variant='h6' className='font-semibold'>
-                      Active Cycles
+              <CardContent>
+                {/* Overview Tab */}
+                <TabPanel value='overview' className='space-y-6'>
+                  <div>
+                    <Typography variant='h6' className='font-semibold mb-4'>
+                      Klick Information
                     </Typography>
-                  </div>
-                  <Grid container spacing={3} className='mb-6'>
-                    {cycles.filter(c => c.status === 'running').slice(0, 3).map(cycle => (
-                      <Grid size={{ xs: 12, md: 6, lg: 4 }} key={cycle.id}>
-                        <Card variant='outlined' className='p-4 hover:shadow-lg transition-shadow'>
-                          <div className='flex items-start justify-between mb-3'>
-                            <div className='flex-1'>
-                              <Typography variant='h6' className='font-bold mb-1'>
-                                {cycle.cycle_name}
-                              </Typography>
-                              <Typography variant='caption' color='text.secondary'>
-                                {cycle.product_type}
-                              </Typography>
-                            </div>
-                            <Chip
-                              label={cycle.status.replace('_', ' ')}
-                              size='small'
-                              color={
-                                cycle.status === 'active'
-                                  ? 'success'
-                                  : cycle.status === 'completed'
-                                    ? 'primary'
-                                    : cycle.status === 'not_started'
-                                      ? 'warning'
-                                      : 'default'
-                              }
-                              variant='tonal'
-                            />
+                    <Grid container spacing={4}>
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Card variant='outlined' className='p-4 h-full'>
+                          <div className='flex items-center gap-2 mb-2'>
+                            <i className='ri-file-text-line text-xl text-primary' />
+                            <Typography variant='body2' color='text.secondary' className='font-medium'>
+                              Description
+                            </Typography>
                           </div>
-
-                          <Divider className='my-3' />
-
-                          <div className='space-y-2 mb-4'>
-                            <div className='flex justify-between items-center'>
-                              <Typography variant='body2' color='text.secondary'>
-                                Saving Amount:
-                              </Typography>
-                              <Typography className='font-semibold'>
-                                {cycle.currency} {parseFloat(cycle.saving_amount).toLocaleString()}
-                              </Typography>
-                            </div>
-                            <div className='flex justify-between items-center'>
-                              <Typography variant='body2' color='text.secondary'>
-                                Total Slots:
-                              </Typography>
-                              <Typography className='font-medium'>{cycle.total_slot}</Typography>
-                            </div>
-                            <div className='flex justify-between items-center'>
-                              <Typography variant='body2' color='text.secondary'>
-                                Payment:
-                              </Typography>
-                              <Typography className='font-medium capitalize'>
-                                {cycle.payment_frequency}
-                              </Typography>
-                            </div>
-                            {cycle.expected_start_date && (
-                              <div className='flex justify-between items-center'>
-                                <Typography variant='body2' color='text.secondary'>
-                                  Start Date:
-                                </Typography>
-                                <Typography variant='body2'>
-                                  {new Date(cycle.expected_start_date).toLocaleDateString()}
-                                </Typography>
-                              </div>
-                            )}
+                          <Typography>{klick.description || 'No description provided.'}</Typography>
+                        </Card>
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Card variant='outlined' className='p-4 h-full'>
+                          <div className='flex items-center gap-2 mb-2'>
+                            <i className='ri-whatsapp-line text-xl text-success' />
+                            <Typography variant='body2' color='text.secondary' className='font-medium'>
+                              WhatsApp Group
+                            </Typography>
                           </div>
-
-                          {cycle.announcement && (
-                            <Alert severity='info' icon={<i className='ri-information-line' />} className='mb-3'>
-                              <Typography variant='caption' className='line-clamp-2'>
-                                {cycle.announcement}
-                              </Typography>
-                            </Alert>
-                          )}
-
                           <Button
                             variant='outlined'
-                            fullWidth
-                            onClick={() => {
-                              router.push(`/dashboards/view-klicks/${id}/cycles/${cycle.id}`)
-                            }}
-                            endIcon={<i className='ri-arrow-right-line' />}
+                            color='success'
+                            href={klick.whatsapp_group_link}
+                            target='_blank'
+                            startIcon={<i className='ri-external-link-line' />}
+                            className='mt-2'
                           >
-                            View Details
+                            Open Group
                           </Button>
                         </Card>
                       </Grid>
-                    ))}
-                  </Grid>
-                </div>
-              )}
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Card variant='outlined' className='p-4 h-full'>
+                          <div className='flex items-center gap-2 mb-2'>
+                            <i className='ri-link text-xl text-info' />
+                            <Typography variant='body2' color='text.secondary' className='font-medium'>
+                              Invite Link
+                            </Typography>
+                          </div>
+                          <div className='flex items-center gap-2 mt-2'>
+                            <Typography variant='body2' className='font-mono text-xs flex-1 truncate'>
+                              {klick.invite_url}
+                            </Typography>
+                            <IconButton size='small' onClick={copyInvite}>
+                              <i className='ri-file-copy-line' />
+                            </IconButton>
+                          </div>
+                        </Card>
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Card variant='outlined' className='p-4 h-full'>
+                          <div className='flex items-center gap-2 mb-2'>
+                            <i className='ri-group-line text-xl text-primary' />
+                            <Typography variant='body2' color='text.secondary' className='font-medium'>
+                              Total Members
+                            </Typography>
+                          </div>
+                          <Typography variant='h4' className='font-bold text-primary'>
+                            {members.length}
+                          </Typography>
+                        </Card>
+                      </Grid>
+                    </Grid>
+                  </div>
 
-              <Divider />
+                  <Divider />
 
-              <div>
-                <Typography variant='h6' className='font-semibold mb-4'>
-                  Quick Stats
-                </Typography>
-                <Grid container spacing={3}>
-                  <Grid size={{ xs: 12, sm: 6, md: 6 }}>
-                    <Card variant='outlined' className='p-4'>
-                      <div className='text-center mb-3'>
-                        <i className='ri-refresh-line text-3xl text-primary mb-2' />
-                        <Typography variant='h5' className='font-bold'>
-                          {cycles.length}
-                        </Typography>
-                        <Typography variant='body2' color='text.secondary'>
-                          Total Cycles
-                        </Typography>
-                      </div>
-                      <Button
-                        variant='outlined'
-                        fullWidth
-                        size='small'
-                        onClick={() => setActiveTab('cycles')}
-                        startIcon={<i className='ri-eye-line' />}
-                      >
-                        View Cycles
-                      </Button>
-                    </Card>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 6, md: 6 }}>
-                    <Card variant='outlined' className='p-4'>
-                      <div className='text-center mb-3'>
-                        <i className='ri-group-line text-3xl text-primary mb-2' />
-                        <Typography variant='h5' className='font-bold'>
-                          {members.length}
-                        </Typography>
-                        <Typography variant='body2' color='text.secondary'>
-                          Total Members
+                  {/* Active Cycles Section */}
+                  {cycles.filter(c => c.status === 'running').length > 0 && (
+                    <div>
+                      <div className='flex items-center justify-between mb-4'>
+                        <Typography variant='h6' className='font-semibold'>
+                          Active Cycles
                         </Typography>
                       </div>
-                      <Button
-                        variant='outlined'
-                        fullWidth
-                        size='small'
-                        onClick={() => setActiveTab('members')}
-                        startIcon={<i className='ri-eye-line' />}
-                      >
-                        View Members
-                      </Button>
-                    </Card>
-                  </Grid>
-                </Grid>
-              </div>
-            </TabPanel>
-
-            {/* Members Tab - List View */}
-            <TabPanel value='members' className='space-y-4'>
-              <div className='flex items-center justify-between mb-4'>
-                <Typography variant='h6' className='font-semibold'>
-                  Members ({members.length})
-                </Typography>
-
-              </div>
-
-              {members.length === 0 ? (
-                <Card variant='outlined' className='p-8 text-center'>
-                  <i className='ri-group-line text-5xl text-textSecondary mb-4' />
-                  <Typography variant='h6' color='text.secondary' className='mb-2'>
-                    No members yet
-                  </Typography>
-                  <Typography variant='body2' color='text.secondary'>
-                    Start inviting people to join your Klick!
-                  </Typography>
-                </Card>
-              ) : (
-                <Card variant='outlined'>
-                  <List className='p-0'>
-                    {members.map((member, index) => (
-                      <div key={member.id}>
-                        <ListItem className='py-3'>
-                          <ListItemAvatar>
-                            <CustomAvatar skin='light' color={member.is_admin ? 'primary' : 'secondary'} size={42}>
-                              {getInitials(`${member.user.first_name} ${member.user.last_name}`)}
-                            </CustomAvatar>
-                          </ListItemAvatar>
-                          <ListItemText
-                            primary={
-                              <div className='flex items-center gap-2'>
-                                <Typography className='font-medium'>
-                                  {member.user.first_name} {member.user.last_name}
-                                </Typography>
-                                {member.is_admin && <Chip label='Admin' size='small' color='primary' variant='tonal' />}
+                      <Grid container spacing={3} className='mb-6'>
+                        {cycles.filter(c => c.status === 'running').slice(0, 3).map(cycle => (
+                          <Grid size={{ xs: 12, md: 6, lg: 4 }} key={cycle.id}>
+                            <Card variant='outlined' className='p-4 hover:shadow-lg transition-shadow'>
+                              <div className='flex items-start justify-between mb-3'>
+                                <div className='flex-1'>
+                                  <Typography variant='h6' className='font-bold mb-1'>
+                                    {cycle.cycle_name}
+                                  </Typography>
+                                  <Typography variant='caption' color='text.secondary'>
+                                    {cycle.product_type}
+                                  </Typography>
+                                </div>
+                                <Chip
+                                  label={cycle.status.replace('_', ' ')}
+                                  size='small'
+                                  color={
+                                    cycle.status === 'active'
+                                      ? 'success'
+                                      : cycle.status === 'completed'
+                                        ? 'primary'
+                                        : cycle.status === 'not_started'
+                                          ? 'warning'
+                                          : 'default'
+                                  }
+                                  variant='tonal'
+                                />
                               </div>
-                            }
-                            secondary={member.user.email}
-                          />
-                          <ListItemSecondaryAction>
-                            <div className='flex items-center gap-1'>
-                              {isAdmin && !member.is_admin && (
-                                <>
-                                  <Tooltip title='Make Admin'>
-                                    <IconButton
-                                      size='small'
-                                      onClick={() => {
-                                        setSelectedMember(member)
-                                        setMakeAdminOpen(true)
-                                      }}
-                                    >
-                                      <i className='ri-vip-crown-line text-lg text-primary' />
-                                    </IconButton>
-                                  </Tooltip>
-                                  <Tooltip title='Remove Member'>
-                                    <IconButton
-                                      size='small'
-                                      onClick={() => {
-                                        setSelectedMember(member)
-                                        setKickMemberOpen(true)
-                                      }}
-                                    >
-                                      <i className='ri-user-unfollow-line text-lg text-error' />
-                                    </IconButton>
-                                  </Tooltip>
-                                </>
+
+                              <Divider className='my-3' />
+
+                              <div className='space-y-2 mb-4'>
+                                <div className='flex justify-between items-center'>
+                                  <Typography variant='body2' color='text.secondary'>
+                                    Saving Amount:
+                                  </Typography>
+                                  <Typography className='font-semibold'>
+                                    {cycle.currency} {parseFloat(cycle.saving_amount).toLocaleString()}
+                                  </Typography>
+                                </div>
+                                <div className='flex justify-between items-center'>
+                                  <Typography variant='body2' color='text.secondary'>
+                                    Total Slots:
+                                  </Typography>
+                                  <Typography className='font-medium'>{cycle.total_slot}</Typography>
+                                </div>
+                                <div className='flex justify-between items-center'>
+                                  <Typography variant='body2' color='text.secondary'>
+                                    Payment:
+                                  </Typography>
+                                  <Typography className='font-medium capitalize'>
+                                    {cycle.payment_frequency}
+                                  </Typography>
+                                </div>
+                                {cycle.expected_start_date && (
+                                  <div className='flex justify-between items-center'>
+                                    <Typography variant='body2' color='text.secondary'>
+                                      Start Date:
+                                    </Typography>
+                                    <Typography variant='body2'>
+                                      {new Date(cycle.expected_start_date).toLocaleDateString()}
+                                    </Typography>
+                                  </div>
+                                )}
+                              </div>
+
+                              {cycle.announcement && (
+                                <Alert severity='info' icon={<i className='ri-information-line' />} className='mb-3'>
+                                  <Typography variant='caption' className='line-clamp-2'>
+                                    {cycle.announcement}
+                                  </Typography>
+                                </Alert>
                               )}
 
+                              <Button
+                                variant='outlined'
+                                fullWidth
+                                onClick={() => {
+                                  router.push(`/dashboards/view-klicks/${id}/cycles/${cycle.id}`)
+                                }}
+                                endIcon={<i className='ri-arrow-right-line' />}
+                              >
+                                View Details
+                              </Button>
+                            </Card>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    </div>
+                  )}
 
-                            </div>
-                          </ListItemSecondaryAction>
-                        </ListItem>
-                        {index < members.length - 1 && <Divider />}
-                      </div>
-                    ))}
-                  </List>
-                </Card>
-              )}
-            </TabPanel>
+                  <Divider />
 
-            {/* Join Requests Tab - List View */}
-            <TabPanel value='join-requests' className='space-y-4'>
-              <div className='flex items-center justify-between mb-4'>
-                <Typography variant='h6' className='font-semibold'>
-                  Join Requests ({joinRequests.length})
-                </Typography>
-                {!isAdmin && <Chip label='Admin Only' size='small' color='warning' variant='outlined' />}
-              </div>
-
-              {joinRequests.length === 0 ? (
-                <Card variant='outlined' className='p-8 text-center'>
-                  <i className='ri-inbox-line text-5xl text-textSecondary mb-4' />
-                  <Typography variant='h6' color='text.secondary' className='mb-2'>
-                    No pending requests
-                  </Typography>
-                  <Typography variant='body2' color='text.secondary'>
-                    All join requests have been processed.
-                  </Typography>
-                </Card>
-              ) : (
-                <Card variant='outlined'>
-                  <List className='p-0'>
-                    {joinRequests.map((request, index) => (
-                      <div key={request.id}>
-                        <ListItem className='py-3'>
-                          <ListItemAvatar>
-                            <CustomAvatar skin='light' color='info' size={42}>
-                              {getInitials(`${request.user.first_name} ${request.user.last_name}`)}
-                            </CustomAvatar>
-                          </ListItemAvatar>
-                          <ListItemText
-                            primary={
-                              <div className='flex items-center gap-2'>
-                                <Typography className='font-medium'>
-                                  {request.user.first_name} {request.user.last_name}
-                                </Typography>
-                                <Chip label='Pending' size='small' color='warning' variant='tonal' />
-                              </div>
-                            }
-                            secondary={
-                              <div>
-                                <Typography variant='body2' color='text.secondary'>
-                                  {request.user.email}
-                                </Typography>
-                                <Typography variant='caption' color='text.secondary'>
-                                  {(() => {
-                                    if (!request.created_at) return 'Requested recently'
-                                    const now = new Date()
-                                    const requested = new Date(request.created_at)
-                                    const diffMs = now.getTime() - requested.getTime()
-                                    const diffMins = Math.floor(diffMs / 60000)
-                                    const diffHours = Math.floor(diffMs / 3600000)
-                                    const diffDays = Math.floor(diffMs / 86400000)
-
-                                    if (diffMins < 1) return 'Requested just now'
-                                    if (diffMins < 60)
-                                      return `Requested ${diffMins} minute${diffMins > 1 ? 's' : ''} ago`
-                                    if (diffHours < 24)
-                                      return `Requested ${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
-                                    if (diffDays < 7) return `Requested ${diffDays} day${diffDays > 1 ? 's' : ''} ago`
-                                    return `Requested on ${requested.toLocaleDateString()}`
-                                  })()}
-                                </Typography>
-                              </div>
-                            }
-                          />
-                          {isAdmin && (
-                            <ListItemSecondaryAction>
-                              <div className='flex items-center gap-2'>
-                                <Button
-                                  size='small'
-                                  variant='contained'
-                                  color='success'
-                                  onClick={() => handleApproveRequest(request.id)}
-                                  startIcon={<i className='ri-check-line' />}
-                                >
-                                  Accept
-                                </Button>
-                                <Button
-                                  size='small'
-                                  variant='outlined'
-                                  color='error'
-                                  onClick={() => handleDeclineRequest(request.id)}
-                                  startIcon={<i className='ri-close-line' />}
-                                >
-                                  Deny
-                                </Button>
-                              </div>
-                            </ListItemSecondaryAction>
-                          )}
-                        </ListItem>
-                        {index < joinRequests.length - 1 && <Divider />}
-                      </div>
-                    ))}
-                  </List>
-                </Card>
-              )}
-            </TabPanel>
-
-            {/* Cycles Tab */}
-            <TabPanel value='cycles' className='space-y-4'>
-              <div className='flex items-center justify-between mb-4'>
-                <Typography variant='h6' className='font-semibold'>
-                  Cycles ({cycles.length})
-                </Typography>
-                {isAdmin && (
-                  <Button
-                    variant='contained'
-                    onClick={() => {
-                      setProductTypeSelectionOpen(true)
-                    }}
-                    startIcon={<i className='ri-add-line' />}
-                  >
-                    Create New Cycle
-                  </Button>
-                )}
-              </div>
-
-              {cycles.length === 0 ? (
-                <Card variant='outlined' className='p-8'>
-                  <Box className='text-center'>
-                    <i className='ri-refresh-line text-6xl text-textSecondary mb-4' />
-                    <Typography variant='h6' color='text.secondary' className='mb-2'>
-                      No cycles started yet
+                  <div>
+                    <Typography variant='h6' className='font-semibold mb-4'>
+                      Quick Stats
                     </Typography>
-                    <Typography variant='body2' color='text.secondary' className='mb-6 max-w-md mx-auto'>
-                      Start your first contribution cycle to begin collecting funds from members. Each cycle helps
-                      organize and track contributions effectively.
+                    <Grid container spacing={3}>
+                      <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+                        <Card variant='outlined' className='p-4'>
+                          <div className='text-center mb-3'>
+                            <i className='ri-refresh-line text-3xl text-primary mb-2' />
+                            <Typography variant='h5' className='font-bold'>
+                              {cycles.length}
+                            </Typography>
+                            <Typography variant='body2' color='text.secondary'>
+                              Total Cycles
+                            </Typography>
+                          </div>
+                          <Button
+                            variant='outlined'
+                            fullWidth
+                            size='small'
+                            onClick={() => setActiveTab('cycles')}
+                            startIcon={<i className='ri-eye-line' />}
+                          >
+                            View Cycles
+                          </Button>
+                        </Card>
+                      </Grid>
+
+                      <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+                        <Card variant='outlined' className='p-4'>
+                          <div className='text-center mb-3'>
+                            <i className='ri-group-line text-3xl text-primary mb-2' />
+                            <Typography variant='h5' className='font-bold'>
+                              {members.length}
+                            </Typography>
+                            <Typography variant='body2' color='text.secondary'>
+                              Total Members
+                            </Typography>
+                          </div>
+                          <Button
+                            variant='outlined'
+                            fullWidth
+                            size='small'
+                            onClick={() => setActiveTab('members')}
+                            startIcon={<i className='ri-eye-line' />}
+                          >
+                            View Members
+                          </Button>
+                        </Card>
+                      </Grid>
+                    </Grid>
+                  </div>
+                </TabPanel>
+
+                {/* Members Tab - List View */}
+                <TabPanel value='members' className='space-y-4'>
+                  <div className='flex items-center justify-between mb-4'>
+                    <Typography variant='h6' className='font-semibold'>
+                      Members ({members.length})
+                    </Typography>
+
+                  </div>
+
+                  {members.length === 0 ? (
+                    <Card variant='outlined' className='p-8 text-center'>
+                      <i className='ri-group-line text-5xl text-textSecondary mb-4' />
+                      <Typography variant='h6' color='text.secondary' className='mb-2'>
+                        No members yet
+                      </Typography>
+                      <Typography variant='body2' color='text.secondary'>
+                        Start inviting people to join your Klick!
+                      </Typography>
+                    </Card>
+                  ) : (
+                    <Card variant='outlined'>
+                      <List className='p-0'>
+                        {members.map((member, index) => (
+                          <div key={member.id}>
+                            <ListItem className='py-3'>
+                              <ListItemAvatar>
+                                <CustomAvatar skin='light' color={member.is_admin ? 'primary' : 'secondary'} size={42}>
+                                  {getInitials(`${member.user.first_name} ${member.user.last_name}`)}
+                                </CustomAvatar>
+                              </ListItemAvatar>
+                              <ListItemText
+                                primary={
+                                  <div className='flex items-center gap-2'>
+                                    <Typography className='font-medium'>
+                                      {member.user.first_name} {member.user.last_name}
+                                    </Typography>
+                                    {member.is_admin && <Chip label='Admin' size='small' color='primary' variant='tonal' />}
+                                  </div>
+                                }
+                                secondary={member.user.email}
+                              />
+                              <ListItemSecondaryAction>
+                                <div className='flex items-center gap-1'>
+                                  {isAdmin && !member.is_admin && (
+                                    <>
+                                      <Tooltip title='Make Admin'>
+                                        <IconButton
+                                          size='small'
+                                          onClick={() => {
+                                            setSelectedMember(member)
+                                            setMakeAdminOpen(true)
+                                          }}
+                                        >
+                                          <i className='ri-vip-crown-line text-lg text-primary' />
+                                        </IconButton>
+                                      </Tooltip>
+                                      <Tooltip title='Remove Member'>
+                                        <IconButton
+                                          size='small'
+                                          onClick={() => {
+                                            setSelectedMember(member)
+                                            setKickMemberOpen(true)
+                                          }}
+                                        >
+                                          <i className='ri-user-unfollow-line text-lg text-error' />
+                                        </IconButton>
+                                      </Tooltip>
+                                    </>
+                                  )}
+
+
+                                </div>
+                              </ListItemSecondaryAction>
+                            </ListItem>
+                            {index < members.length - 1 && <Divider />}
+                          </div>
+                        ))}
+                      </List>
+                    </Card>
+                  )}
+                </TabPanel>
+
+                {/* Join Requests Tab - List View */}
+                <TabPanel value='join-requests' className='space-y-4'>
+                  <div className='flex items-center justify-between mb-4'>
+                    <Typography variant='h6' className='font-semibold'>
+                      Join Requests ({joinRequests.length})
+                    </Typography>
+                    {!isAdmin && <Chip label='Admin Only' size='small' color='warning' variant='outlined' />}
+                  </div>
+
+                  {joinRequests.length === 0 ? (
+                    <Card variant='outlined' className='p-8 text-center'>
+                      <i className='ri-inbox-line text-5xl text-textSecondary mb-4' />
+                      <Typography variant='h6' color='text.secondary' className='mb-2'>
+                        No pending requests
+                      </Typography>
+                      <Typography variant='body2' color='text.secondary'>
+                        All join requests have been processed.
+                      </Typography>
+                    </Card>
+                  ) : (
+                    <Card variant='outlined'>
+                      <List className='p-0'>
+                        {joinRequests.map((request, index) => (
+                          <div key={request.id}>
+                            <ListItem className='py-3'>
+                              <ListItemAvatar>
+                                <CustomAvatar skin='light' color='info' size={42}>
+                                  {getInitials(`${request.user.first_name} ${request.user.last_name}`)}
+                                </CustomAvatar>
+                              </ListItemAvatar>
+                              <ListItemText
+                                primary={
+                                  <div className='flex items-center gap-2'>
+                                    <Typography className='font-medium'>
+                                      {request.user.first_name} {request.user.last_name}
+                                    </Typography>
+                                    <Chip label='Pending' size='small' color='warning' variant='tonal' />
+                                  </div>
+                                }
+                                secondary={
+                                  <div>
+                                    <Typography variant='body2' color='text.secondary'>
+                                      {request.user.email}
+                                    </Typography>
+                                    <Typography variant='caption' color='text.secondary'>
+                                      {(() => {
+                                        if (!request.created_at) return 'Requested recently'
+                                        const now = new Date()
+                                        const requested = new Date(request.created_at)
+                                        const diffMs = now.getTime() - requested.getTime()
+                                        const diffMins = Math.floor(diffMs / 60000)
+                                        const diffHours = Math.floor(diffMs / 3600000)
+                                        const diffDays = Math.floor(diffMs / 86400000)
+
+                                        if (diffMins < 1) return 'Requested just now'
+                                        if (diffMins < 60)
+                                          return `Requested ${diffMins} minute${diffMins > 1 ? 's' : ''} ago`
+                                        if (diffHours < 24)
+                                          return `Requested ${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
+                                        if (diffDays < 7) return `Requested ${diffDays} day${diffDays > 1 ? 's' : ''} ago`
+                                        return `Requested on ${requested.toLocaleDateString()}`
+                                      })()}
+                                    </Typography>
+                                  </div>
+                                }
+                              />
+                              {isAdmin && (
+                                <ListItemSecondaryAction>
+                                  <div className='flex items-center gap-2'>
+                                    <Button
+                                      size='small'
+                                      variant='contained'
+                                      color='success'
+                                      onClick={() => handleApproveRequest(request.id)}
+                                      startIcon={<i className='ri-check-line' />}
+                                    >
+                                      Accept
+                                    </Button>
+                                    <Button
+                                      size='small'
+                                      variant='outlined'
+                                      color='error'
+                                      onClick={() => handleDeclineRequest(request.id)}
+                                      startIcon={<i className='ri-close-line' />}
+                                    >
+                                      Deny
+                                    </Button>
+                                  </div>
+                                </ListItemSecondaryAction>
+                              )}
+                            </ListItem>
+                            {index < joinRequests.length - 1 && <Divider />}
+                          </div>
+                        ))}
+                      </List>
+                    </Card>
+                  )}
+                </TabPanel>
+
+                {/* Cycles Tab */}
+                <TabPanel value='cycles' className='space-y-4'>
+                  <div className='flex items-center justify-between mb-4'>
+                    <Typography variant='h6' className='font-semibold'>
+                      Cycles ({cycles.length})
                     </Typography>
                     {isAdmin && (
                       <Button
                         variant='contained'
-                        size='large'
-                        onClick={() => setProductTypeSelectionOpen(true)}
-                        startIcon={<i className='ri-play-circle-line' />}
+                        onClick={() => {
+                          setProductTypeSelectionOpen(true)
+                        }}
+                        startIcon={<i className='ri-add-line' />}
                       >
-                        Start Your First Cycle
+                        Create New Cycle
                       </Button>
                     )}
-                  </Box>
-                </Card>
+                  </div>
+
+                  {cycles.length === 0 ? (
+                    <Card variant='outlined' className='p-8'>
+                      <Box className='text-center'>
+                        <i className='ri-refresh-line text-6xl text-textSecondary mb-4' />
+                        <Typography variant='h6' color='text.secondary' className='mb-2'>
+                          No cycles started yet
+                        </Typography>
+                        <Typography variant='body2' color='text.secondary' className='mb-6 max-w-md mx-auto'>
+                          Start your first contribution cycle to begin collecting funds from members. Each cycle helps
+                          organize and track contributions effectively.
+                        </Typography>
+                        {isAdmin && (
+                          <Button
+                            variant='contained'
+                            size='large'
+                            onClick={() => setProductTypeSelectionOpen(true)}
+                            startIcon={<i className='ri-play-circle-line' />}
+                          >
+                            Start Your First Cycle
+                          </Button>
+                        )}
+                      </Box>
+                    </Card>
+                  ) : (
+                    <Grid container spacing={3}>
+                      {cycles.map(cycle => (
+                        <Grid size={{ xs: 12, md: 6, lg: 4 }} key={cycle.id}>
+                          <Card variant='outlined' className='p-4 hover:shadow-lg transition-shadow'>
+                            <div className='flex items-start justify-between mb-3'>
+                              <div className='flex-1'>
+                                <Typography variant='h6' className='font-bold mb-1'>
+                                  {cycle.cycle_name}
+                                </Typography>
+                                <Typography variant='caption' color='text.secondary'>
+                                  {cycle.product_type}
+                                </Typography>
+                              </div>
+                              <Chip
+                                label={cycle.status.replace('_', ' ')}
+                                size='small'
+                                color={
+                                  cycle.status === 'active'
+                                    ? 'success'
+                                    : cycle.status === 'completed'
+                                      ? 'primary'
+                                      : cycle.status === 'not_started'
+                                        ? 'warning'
+                                        : 'default'
+                                }
+                                variant='tonal'
+                              />
+                            </div>
+
+                            <Divider className='my-3' />
+
+                            <div className='space-y-2 mb-4'>
+                              <div className='flex justify-between items-center'>
+                                <Typography variant='body2' color='text.secondary'>
+                                  Saving Amount:
+                                </Typography>
+                                <Typography className='font-semibold'>
+                                  {cycle.currency} {parseFloat(cycle.saving_amount).toLocaleString()}
+                                </Typography>
+                              </div>
+                              <div className='flex justify-between items-center'>
+                                <Typography variant='body2' color='text.secondary'>
+                                  Total Slots:
+                                </Typography>
+                                <Typography className='font-medium'>{cycle.total_slot}</Typography>
+                              </div>
+                              <div className='flex justify-between items-center'>
+                                <Typography variant='body2' color='text.secondary'>
+                                  Payment:
+                                </Typography>
+                                <Typography className='font-medium capitalize'>
+                                  {cycle.payment_frequency}
+                                </Typography>
+                              </div>
+                              {cycle.expected_start_date && (
+                                <div className='flex justify-between items-center'>
+                                  <Typography variant='body2' color='text.secondary'>
+                                    Start Date:
+                                  </Typography>
+                                  <Typography variant='body2'>
+                                    {new Date(cycle.expected_start_date).toLocaleDateString()}
+                                  </Typography>
+                                </div>
+                              )}
+                            </div>
+
+                            {cycle.announcement && (
+                              <Alert severity='info' icon={<i className='ri-information-line' />} className='mb-3'>
+                                <Typography variant='caption' className='line-clamp-2'>
+                                  {cycle.announcement}
+                                </Typography>
+                              </Alert>
+                            )}
+
+                            <Button
+                              variant='outlined'
+                              fullWidth
+                              onClick={() => {
+                                // Navigate to cycle detail page (to be implemented)
+                                router.push(`/dashboards/view-klicks/${id}/cycles/${cycle.id}`)
+                              }}
+                              endIcon={<i className='ri-arrow-right-line' />}
+                            >
+                              View Details
+                            </Button>
+                          </Card>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  )}
+                </TabPanel>
+
+                {/* Settings Tab */}
+                {/* Invite Tab */}
+                {/* Invite Tab */}
+                <TabPanel value='invite' className='space-y-4'>
+                  <Typography variant='h6' className='font-semibold mb-4'>
+                    Invite New Member
+                  </Typography>
+                  <Card variant='outlined' className='p-6'>
+                    <Grid container spacing={2}>
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant='body1' className='mb-2'>
+                          Invite via Email or Phone Number (at least one is required)
+                        </Typography>
+                      </Grid>
+
+                      {/* Email Input */}
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <TextField
+                          fullWidth
+                          type='email'
+                          label='Email Address'
+                          placeholder='Enter email address'
+                          value={inviteEmail}
+                          onChange={e => setInviteEmail(e.target.value)}
+                          size='small'
+                        />
+                      </Grid>
+
+                      {/* Phone Input */}
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <div className='flex gap-2 items-start'>
+                          <FormControl size='small' sx={{ minWidth: 100 }}>
+                            <InputLabel>Country</InputLabel>
+                            {loadingCountries ? (
+                              <div className='flex items-center justify-center p-2'>
+                                <CircularProgress size={20} />
+                              </div>
+                            ) : (
+                              <Select
+                                value={countryCode}
+                                label='Country'
+                                onChange={e => {
+                                  setCountryCode(e.target.value)
+                                  const country = countries.find(c => c.code === e.target.value)
+                                  if (country) setSelectedCountry(country)
+                                }}
+                                renderValue={selected => (
+                                  <div className='flex items-center gap-2'>
+                                    {selectedCountry && (
+                                      <img
+                                        src={selectedCountry.flagUrl}
+                                        alt={selectedCountry.name}
+                                        width='20'
+                                        height='15'
+                                        style={{ objectFit: 'cover' }}
+                                      />
+                                    )}
+                                    <span className='pe-5'>{selected}</span>
+                                  </div>
+                                )}
+                                MenuProps={{
+                                  PaperProps: {
+                                    style: {
+                                      maxHeight: 300,
+                                      width: 250
+                                    }
+                                  }
+                                }}
+                              >
+                                {countries.map(country => (
+                                  <MenuItem key={`${country.cca2}-${country.code}`} value={country.code}>
+                                    <div className='flex items-center gap-2'>
+                                      <img
+                                        src={country.flagUrl}
+                                        alt={country.name}
+                                        width='20'
+                                        height='15'
+                                        style={{ objectFit: 'cover' }}
+                                      />
+                                      <span className='truncate'>{country.name}</span>
+                                      <span className='text-gray-500'>({country.code})</span>
+                                    </div>
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            )}
+                          </FormControl>
+                          <TextField
+                            fullWidth
+                            size='small'
+                            type='tel'
+                            label='Phone Number'
+                            placeholder='8012345678'
+                            value={invitePhone}
+                            onChange={e => setInvitePhone(e.target.value)}
+                          />
+                        </div>
+                      </Grid>
+
+                      <Grid size={{ xs: 12 }}>
+                        <Button
+                          variant='contained'
+                          onClick={handleInviteMember}
+                          startIcon={<i className='ri-send-plane-fill' />}
+                          disabled={(!inviteEmail && !invitePhone) || isInviting}
+                          sx={{ minWidth: 120 }}
+                        >
+                          {isInviting ? <CircularProgress size={24} color="inherit" /> : 'Send Invite'}
+                        </Button>
+                      </Grid>
+                    </Grid>
+
+                  </Card>
+
+                  {/* Pending Invites List */}
+                  <div className='mt-8'>
+                    <Typography variant='h6' className='font-semibold mb-4'>
+                      Pending Invites ({joinRequests.length})
+                    </Typography>
+                    {joinRequests.length === 0 ? (
+                      <Card variant='outlined' className='p-6 text-center'>
+                        <Typography variant='body2' color='text.secondary'>
+                          No pending invites.
+                        </Typography>
+                      </Card>
+                    ) : (
+                      <Card variant='outlined'>
+                        <List className='p-0'>
+                          {joinRequests.map((request, index) => (
+                            <div key={request.id}>
+                              <ListItem className='py-3'>
+                                <ListItemAvatar>
+                                  <CustomAvatar skin='light' color='info' size={42}>
+                                    {getInitials(`${request.user.first_name} ${request.user.last_name}`)}
+                                  </CustomAvatar>
+                                </ListItemAvatar>
+                                <ListItemText
+                                  primary={
+                                    <div className='flex items-center gap-2'>
+                                      <Typography className='font-medium'>
+                                        {request.user.first_name} {request.user.last_name}
+                                      </Typography>
+                                      <Chip label='Pending' size='small' color='warning' variant='tonal' />
+                                    </div>
+                                  }
+                                  secondary={request.user.email}
+                                />
+                                {isAdmin && (
+                                  <ListItemSecondaryAction>
+                                    <div className='flex items-center gap-2'>
+                                      <IconButton
+                                        size='small'
+                                        color='error'
+                                        onClick={() => handleDeclineRequest(request.id)}
+                                        title='Revoke Invite'
+                                      >
+                                        <i className='ri-close-line' />
+                                      </IconButton>
+                                    </div>
+                                  </ListItemSecondaryAction>
+                                )}
+                              </ListItem>
+                              {index < joinRequests.length - 1 && <Divider />}
+                            </div>
+                          ))}
+                        </List>
+                      </Card>
+                    )}
+                  </div>
+                </TabPanel>
+              </CardContent >
+            </TabContext>
+          </Card>
+        </Grid>
+
+        {/* RIGHT COLUMN - Cycles Section */}
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Card className='h-full'>
+            <CardHeader
+              title='Cycles'
+              action={
+                isAdmin && (
+                  <IconButton size='small' onClick={() => setProductTypeSelectionOpen(true)} title='Create New Cycle'>
+                    <i className='ri-add-line' />
+                  </IconButton>
+                )
+              }
+            />
+            <div>
+              <TabContext value={cycleFilter}>
+                <CustomTabList
+                  onChange={(e, val) => setCycleFilter(val)}
+                  variant='fullWidth'
+                  scrollButtons={false}
+                  aria-label="cycle filters"
+                  className='border-b mb-4'
+                >
+                  <Tab value='all' label='All' sx={{ minWidth: 'auto', px: 1, fontSize: '0.75rem' }} />
+                  <Tab value='thrift' label='Thrift' sx={{ minWidth: 'auto', px: 1, fontSize: '0.75rem' }} />
+                  <Tab value='contribution' label='Contribution' sx={{ minWidth: 'auto', px: 1, fontSize: '0.75rem' }} />
+                  <Tab value='investment' label='Investment' sx={{ minWidth: 'auto', px: 1, fontSize: '0.75rem' }} />
+                </CustomTabList>
+              </TabContext>
+            </div>
+
+            <CardContent className='pt-0'>
+              {cycles.length === 0 ? (
+                <div className='text-center py-8'>
+                  <i className='ri-refresh-line text-4xl text-textSecondary mb-2 block' />
+                  <Typography variant='body2' color='text.secondary'>
+                    No cycles found.
+                  </Typography>
+                  {isAdmin && (
+                    <Button
+                      variant='text'
+                      size='small'
+                      onClick={() => setProductTypeSelectionOpen(true)}
+                      startIcon={<i className='ri-add-line' />}
+                      className='mt-2'
+                    >
+                      Start First Cycle
+                    </Button>
+                  )}
+                </div>
               ) : (
-                <Grid container spacing={3}>
-                  {cycles.map(cycle => (
-                    <Grid size={{ xs: 12, md: 6, lg: 4 }} key={cycle.id}>
-                      <Card variant='outlined' className='p-4 hover:shadow-lg transition-shadow'>
-                        <div className='flex items-start justify-between mb-3'>
-                          <div className='flex-1'>
-                            <Typography variant='h6' className='font-bold mb-1'>
+                <div className='space-y-4'>
+                  {cycles
+                    .filter(cycle => cycleFilter === 'all' || cycle.product_type === cycleFilter)
+                    .map(cycle => (
+                      <Card key={cycle.id} variant='outlined' className='p-4 hover:shadow-md transition-shadow cursor-pointer' onClick={() => router.push(`/dashboards/view-klicks/${id}/cycles/${cycle.id}`)}>
+                        <div className='flex justify-between items-start mb-2'>
+                          <div>
+                            <Typography variant='subtitle1' className='font-bold line-clamp-1'>
                               {cycle.cycle_name}
                             </Typography>
-                            <Typography variant='caption' color='text.secondary'>
+                            <Typography variant='caption' color='text.secondary' className='uppercase'>
                               {cycle.product_type}
                             </Typography>
                           </div>
                           <Chip
-                            label={cycle.status.replace('_', ' ')}
+                            label={cycle.status}
                             size='small'
-                            color={
-                              cycle.status === 'active'
-                                ? 'success'
-                                : cycle.status === 'completed'
-                                  ? 'primary'
-                                  : cycle.status === 'not_started'
-                                    ? 'warning'
-                                    : 'default'
-                            }
+                            color={cycle.status === 'running' ? 'success' : 'default'}
                             variant='tonal'
+                            className='capitalize'
                           />
                         </div>
 
-                        <Divider className='my-3' />
+                        <Divider className='my-2' />
 
-                        <div className='space-y-2 mb-4'>
-                          <div className='flex justify-between items-center'>
-                            <Typography variant='body2' color='text.secondary'>
-                              Saving Amount:
-                            </Typography>
-                            <Typography className='font-semibold'>
-                              {cycle.currency} {parseFloat(cycle.saving_amount).toLocaleString()}
-                            </Typography>
-                          </div>
-                          <div className='flex justify-between items-center'>
-                            <Typography variant='body2' color='text.secondary'>
-                              Total Slots:
-                            </Typography>
-                            <Typography className='font-medium'>{cycle.total_slot}</Typography>
-                          </div>
-                          <div className='flex justify-between items-center'>
-                            <Typography variant='body2' color='text.secondary'>
-                              Payment:
-                            </Typography>
-                            <Typography className='font-medium capitalize'>
-                              {cycle.payment_frequency}
-                            </Typography>
-                          </div>
-                          {cycle.expected_start_date && (
-                            <div className='flex justify-between items-center'>
-                              <Typography variant='body2' color='text.secondary'>
-                                Start Date:
-                              </Typography>
-                              <Typography variant='body2'>
-                                {new Date(cycle.expected_start_date).toLocaleDateString()}
-                              </Typography>
-                            </div>
-                          )}
+                        <div className='flex justify-between items-center text-sm'>
+                          <span className='text-gray-500'>Saving Amount:</span>
+                          <span className='font-medium'>{cycle.currency} {parseFloat(cycle.saving_amount).toLocaleString()}</span>
                         </div>
-
-                        {cycle.announcement && (
-                          <Alert severity='info' icon={<i className='ri-information-line' />} className='mb-3'>
-                            <Typography variant='caption' className='line-clamp-2'>
-                              {cycle.announcement}
-                            </Typography>
-                          </Alert>
-                        )}
-
-                        <Button
-                          variant='outlined'
-                          fullWidth
-                          onClick={() => {
-                            // Navigate to cycle detail page (to be implemented)
-                            router.push(`/dashboards/view-klicks/${id}/cycles/${cycle.id}`)
-                          }}
-                          endIcon={<i className='ri-arrow-right-line' />}
-                        >
-                          View Details
-                        </Button>
+                        <div className='flex justify-between items-center text-sm mt-1'>
+                          <span className='text-gray-500'>Slots:</span>
+                          <span className='font-medium'>{cycle.total_slot}</span>
+                        </div>
                       </Card>
-                    </Grid>
-                  ))}
-                </Grid>
-              )}
-            </TabPanel>
+                    ))}
 
-            {/* Settings Tab */}
-            {/* Invite Tab */}
-            {/* Invite Tab */}
-            <TabPanel value='invite' className='space-y-4'>
-              <Typography variant='h6' className='font-semibold mb-4'>
-                Invite New Member
-              </Typography>
-              <Card variant='outlined' className='p-6'>
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 12 }}>
-                    <Typography variant='body1' className='mb-2'>
-                      Invite via Email or Phone Number (at least one is required)
-                    </Typography>
-                  </Grid>
-
-                  {/* Email Input */}
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <TextField
-                      fullWidth
-                      type='email'
-                      label='Email Address'
-                      placeholder='Enter email address'
-                      value={inviteEmail}
-                      onChange={e => setInviteEmail(e.target.value)}
-                      size='small'
-                    />
-                  </Grid>
-
-                  {/* Phone Input */}
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <div className='flex gap-2 items-start'>
-                      <FormControl size='small' sx={{ minWidth: 100 }}>
-                        <InputLabel>Country</InputLabel>
-                        {loadingCountries ? (
-                          <div className='flex items-center justify-center p-2'>
-                            <CircularProgress size={20} />
-                          </div>
-                        ) : (
-                          <Select
-                            value={countryCode}
-                            label='Country'
-                            onChange={e => {
-                              setCountryCode(e.target.value)
-                              const country = countries.find(c => c.code === e.target.value)
-                              if (country) setSelectedCountry(country)
-                            }}
-                            renderValue={selected => (
-                              <div className='flex items-center gap-2'>
-                                {selectedCountry && (
-                                  <img
-                                    src={selectedCountry.flagUrl}
-                                    alt={selectedCountry.name}
-                                    width='20'
-                                    height='15'
-                                    style={{ objectFit: 'cover' }}
-                                  />
-                                )}
-                                <span className='pe-5'>{selected}</span>
-                              </div>
-                            )}
-                            MenuProps={{
-                              PaperProps: {
-                                style: {
-                                  maxHeight: 300,
-                                  width: 250
-                                }
-                              }
-                            }}
-                          >
-                            {countries.map(country => (
-                              <MenuItem key={`${country.cca2}-${country.code}`} value={country.code}>
-                                <div className='flex items-center gap-2'>
-                                  <img
-                                    src={country.flagUrl}
-                                    alt={country.name}
-                                    width='20'
-                                    height='15'
-                                    style={{ objectFit: 'cover' }}
-                                  />
-                                  <span className='truncate'>{country.name}</span>
-                                  <span className='text-gray-500'>({country.code})</span>
-                                </div>
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        )}
-                      </FormControl>
-                      <TextField
-                        fullWidth
-                        size='small'
-                        type='tel'
-                        label='Phone Number'
-                        placeholder='8012345678'
-                        value={invitePhone}
-                        onChange={e => setInvitePhone(e.target.value)}
-                      />
+                  {cycles.filter(cycle => cycleFilter === 'all' || cycle.product_type === cycleFilter).length === 0 && (
+                    <div className='text-center py-4'>
+                      <Typography variant='body2' color='text.secondary'>
+                        No {cycleFilter} cycles found.
+                      </Typography>
                     </div>
-                  </Grid>
-
-                  <Grid size={{ xs: 12 }}>
-                    <Button
-                      variant='contained'
-                      onClick={handleInviteMember}
-                      startIcon={<i className='ri-send-plane-fill' />}
-                      disabled={(!inviteEmail && !invitePhone) || isInviting}
-                      sx={{ minWidth: 120 }}
-                    >
-                      {isInviting ? <CircularProgress size={24} color="inherit" /> : 'Send Invite'}
-                    </Button>
-                  </Grid>
-                </Grid>
-
-              </Card>
-
-              {/* Pending Invites List */}
-              <div className='mt-8'>
-                <Typography variant='h6' className='font-semibold mb-4'>
-                  Pending Invites ({joinRequests.length})
-                </Typography>
-                {joinRequests.length === 0 ? (
-                  <Card variant='outlined' className='p-6 text-center'>
-                    <Typography variant='body2' color='text.secondary'>
-                      No pending invites.
-                    </Typography>
-                  </Card>
-                ) : (
-                  <Card variant='outlined'>
-                    <List className='p-0'>
-                      {joinRequests.map((request, index) => (
-                        <div key={request.id}>
-                          <ListItem className='py-3'>
-                            <ListItemAvatar>
-                              <CustomAvatar skin='light' color='info' size={42}>
-                                {getInitials(`${request.user.first_name} ${request.user.last_name}`)}
-                              </CustomAvatar>
-                            </ListItemAvatar>
-                            <ListItemText
-                              primary={
-                                <div className='flex items-center gap-2'>
-                                  <Typography className='font-medium'>
-                                    {request.user.first_name} {request.user.last_name}
-                                  </Typography>
-                                  <Chip label='Pending' size='small' color='warning' variant='tonal' />
-                                </div>
-                              }
-                              secondary={request.user.email}
-                            />
-                            {isAdmin && (
-                              <ListItemSecondaryAction>
-                                <div className='flex items-center gap-2'>
-                                  <IconButton
-                                    size='small'
-                                    color='error'
-                                    onClick={() => handleDeclineRequest(request.id)}
-                                    title='Revoke Invite'
-                                  >
-                                    <i className='ri-close-line' />
-                                  </IconButton>
-                                </div>
-                              </ListItemSecondaryAction>
-                            )}
-                          </ListItem>
-                          {index < joinRequests.length - 1 && <Divider />}
-                        </div>
-                      ))}
-                    </List>
-                  </Card>
-                )}
-              </div>
-            </TabPanel>
-          </CardContent >
-        </TabContext >
-      </Card >
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
 
       {/* Edit Klick Dialog */}
