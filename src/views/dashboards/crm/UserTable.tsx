@@ -145,69 +145,116 @@ export default function KlickList() {
         <Grid container spacing={3}>
           {filteredKlicks.map(klick => (
             <Grid size={{ xs: 12, md: 6 }} key={klick.id}>
-              <Card
-                onClick={() => router.push(`/dashboards/view-klicks/${klick.id}`)}
-                className='relative overflow-hidden cursor-pointer group transition-all duration-300 hover:shadow-lg'
-                variant='outlined'
-                sx={{
-                  borderColor: 'divider',
-                  '&:hover': {
-                    borderColor: 'primary.main',
-                    transform: 'translateY(-4px)'
-                  }
-                }}
-              >
-                <CardContent className='p-0 h-full'>
-                  <div className='flex h-full'>
-                    {/* Left Content */}
-                    <div className='flex-1 p-5 flex flex-col justify-between z-10'>
-                      <div>
-                        {klick.is_admin && (
-                          <Chip
-                            label='Admin'
-                            size='small'
-                            color='primary'
-                            variant='tonal'
-                            className='mb-2'
-                            sx={{ height: 20, fontSize: '0.75rem' }}
-                          />
-                        )}
-                        <Typography variant='h6' className='font-bold mb-1 line-clamp-1'>
-                          {klick.name}
-                        </Typography>
-                        <Typography variant='body2' color='text.secondary' className='mb-3 line-clamp-2'>
-                          {klick.description || 'No description available'}
-                        </Typography>
-                      </div>
-
-                      <div className='mt-auto'>
-                        <div className='flex items-center gap-2 text-primary font-medium group-hover:underline'>
-                          <Typography variant='body2' color='inherit' className='font-bold'>
-                            View Klick
-                          </Typography>
-                          <i className='ri-arrow-right-line transition-transform group-hover:translate-x-1' />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right Content - Illustration */}
-                    <div className='w-1/3 min-w-[120px] relative flex items-center justify-center bg-gray-50/50 p-2'>
-                      {/* Decorative Background Circle */}
-                      <div className='absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 w-32 h-32 rounded-full bg-primary/5' />
-
-                      <img
-                        src={getIllustration(klick.id)}
-                        alt='Klick Illustration'
-                        className='relative z-10 w-full h-auto object-contain max-h-[140px] drop-shadow-sm transition-transform duration-300 group-hover:scale-110'
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <KlickCard klick={klick} illustration={getIllustration(klick.id)} />
             </Grid>
           ))}
         </Grid>
       )}
     </div>
+  )
+}
+
+const KlickCard = ({ klick, illustration }: { klick: KlickType; illustration: string }) => {
+  const router = useRouter()
+  const api = NetworkInstance()
+  const { token } = useAuth()
+  const [memberCount, setMemberCount] = useState<number | null>(null)
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        const res = await api.get(`/klicks/${klick.id}/members`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        // Based on user provided response: { pagination: { total: 4 } }
+        setMemberCount(res.data.pagination?.total || res.data.data?.length || 0)
+      } catch (err) {
+        console.error(`Error fetching members for klick ${klick.id}:`, err)
+        setMemberCount(0)
+      }
+    }
+
+    if (token) {
+      fetchMembers()
+    }
+  }, [klick.id, token, api])
+
+  return (
+    <Card
+      onClick={() => router.push(`/dashboards/view-klicks/${klick.id}`)}
+      className='relative overflow-hidden cursor-pointer group transition-all duration-300 hover:shadow-lg h-full'
+      variant='outlined'
+      sx={{
+        borderColor: 'divider',
+        minHeight: '200px',
+        '&:hover': {
+          borderColor: 'primary.main',
+          transform: 'translateY(-4px)'
+        }
+      }}
+    >
+      <CardContent className='p-0 h-full'>
+        <div className='flex h-full flex-col sm:flex-row'>
+          {/* Left Content - Text */}
+          <div className='flex-1 p-6 flex flex-col justify-between z-10 min-w-0'>
+            <div className='space-y-2'>
+              <Typography variant='h5' className='font-bold line-clamp-1 text-primary'>
+                {klick.name}
+              </Typography>
+              <Typography variant='body2' color='text.secondary' className='line-clamp-2 mb-4'>
+                {klick.description || 'No description available'}
+              </Typography>
+
+              {/* Stats - Member Count Only */}
+              <div className='mt-auto pt-4'>
+                <div className='flex items-center gap-2 text-textSecondary bg-actionHover w-fit px-3 py-1 rounded-full'>
+                  <i className='ri-group-line text-lg text-primary' />
+                  <Typography variant='body2' className='font-medium'>
+                    {memberCount !== null ? memberCount : '...'} Members
+                  </Typography>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Content - Dominant Illustration */}
+          <div
+            className='w-full sm:w-[45%] relative overflow-hidden'
+            style={{
+              borderTopLeftRadius: '150px',
+              backgroundColor: 'rgba(103, 58, 183, 0.08)' // Slightly darker base
+            }}
+          >
+            {/* Organic Cloud Shapes */}
+            <div
+              className='absolute top-[-20%] -right-[20%] w-[100%] h-[100%] rounded-full pointer-events-none'
+              style={{
+                backgroundColor: 'rgba(103, 58, 183, 0.25)', // Darker purple
+                filter: 'blur(50px)',
+                borderRadius: '30% 70% 70% 30% / 30% 30% 70% 70%'
+              }}
+            />
+            <div
+              className='absolute bottom-[-10%] -left-[10%] w-[80%] h-[80%] rounded-full pointer-events-none'
+              style={{
+                backgroundColor: 'rgba(156, 39, 176, 0.2)', // Secondary purple
+                filter: 'blur(40px)',
+                borderRadius: '60% 40% 30% 70% / 60% 30% 70% 40%'
+              }}
+            />
+
+            <div className='h-full w-full relative flex items-center justify-center p-4 z-10'>
+              <img
+                src={illustration}
+                alt='Klick Illustration'
+                className='w-full h-full object-contain max-h-[160px] drop-shadow-md transform group-hover:scale-105 transition-transform duration-300'
+              />
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

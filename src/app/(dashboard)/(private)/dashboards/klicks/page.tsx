@@ -93,66 +93,26 @@ export default function Klicks() {
   return (
     <div className='space-y-6'>
       {/* Hero Header Section */}
-      <Card className='bg-gradient-to-br from-primary/10 via-background-paper to-primary/5 border-2 border-primary/20 shadow-lg'>
-        <CardContent className='p-6 sm:p-8'>
-          <div className='flex flex-col md:flex-row items-start md:items-center justify-between gap-6'>
-            <div className='flex-1'>
-              <div className='flex items-center gap-3 mb-4'>
-                <div className='flex items-center justify-center w-14 h-14 rounded-xl bg-primary/10'>
-                  <i className='ri-dashboard-3-line text-3xl text-primary' />
-                </div>
-                <div>
-                  <Typography variant='h3' className='font-bold mb-1'>
-                    Klicks Dashboard
-                  </Typography>
-                  <Typography variant='body1' color='text.secondary'>
-                    Manage your Klicks, share invite links, and monitor group activity
-                  </Typography>
-                </div>
-              </div>
+      {/* Header Section */}
+      <div className='flex flex-col md:flex-row items-start md:items-center justify-between gap-4'>
+        <div>
+          <Typography variant='h3' className='font-bold mb-1 text-textPrimary'>
+            My Klicks
+          </Typography>
+          <Typography variant='body1' color='text.secondary'>
+            Your private groups for saving and investing together
+          </Typography>
+        </div>
 
-              {/* Action Buttons */}
-              <div className='flex flex-wrap gap-3 mt-4'>
-                <Button
-                  variant='contained'
-                  size='large'
-                  onClick={() => router.push('/dashboards/create-klick')}
-                  startIcon={<i className='ri-add-circle-line' />}
-                  sx={{
-                    background:
-                      'linear-gradient(135deg, var(--mui-palette-primary-main) 0%, var(--mui-palette-primary-dark) 100%)',
-                    boxShadow: '0 4px 12px var(--mui-palette-primary-mainOpacity)',
-                    '&:hover': {
-                      background:
-                        'linear-gradient(135deg, var(--mui-palette-primary-dark) 0%, var(--mui-palette-primary-main) 100%)',
-                      boxShadow: '0 6px 16px var(--mui-palette-primary-mainOpacity)'
-                    }
-                  }}
-                >
-                  Create Klick
-                </Button>
-                <Button
-                  variant='outlined'
-                  size='large'
-                  onClick={() => router.push('/dashboards/join-klick')}
-                  startIcon={<i className='ri-user-add-line' />}
-                  sx={{
-                    borderColor: 'var(--mui-palette-success-main)',
-                    color: 'var(--mui-palette-success-main)',
-                    '&:hover': {
-                      borderColor: 'var(--mui-palette-success-dark)',
-                      backgroundColor: 'var(--mui-palette-success-lightOpacity)'
-                    }
-                  }}
-                >
-                  Join Klick
-                </Button>
-
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        <Button
+          variant='contained'
+          size='large'
+          onClick={() => router.push('/dashboards/create-klick')}
+          startIcon={<i className='ri-add-line' />}
+        >
+          Create New Klick
+        </Button>
+      </div>
 
       {/* Statistics Cards */}
       {/* <Grid container spacing={4}>
