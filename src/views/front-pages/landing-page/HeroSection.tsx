@@ -32,12 +32,10 @@ const HeroSection = ({ mode }: { mode: Mode }) => {
       <div
         className="absolute inset-0 z-[-1]"
         style={{
-          background: `
-          linear-gradient(135deg, rgba(156, 39, 176, 0.03) 0%, rgba(156, 39, 176, 0.08) 100%),
-          radial-gradient(circle at 15% 50%, rgba(156, 39, 176, 0.08) 0%, transparent 25%),
-          radial-gradient(circle at 85% 30%, rgba(103, 58, 183, 0.08) 0%, transparent 25%)
-        `,
-          backgroundSize: 'cover'
+          background: `linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)), url('/images/pages/frontpage.jpeg')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
         }}
       />
 
@@ -49,7 +47,7 @@ const HeroSection = ({ mode }: { mode: Mode }) => {
           <Typography className='font-extrabold text-primary sm:text-[38px] text-3xl mbe-4 leading-[44px]'>
             Trust the Klick. Build Wealth Together.
           </Typography>
-          <Typography className='font-medium text-lg' color='text.primary'>
+          <Typography className='font-medium text-lg text-white'>
             Trustklick is the modern platform for managing group savings, contributions, and investment clubs.
             Create or join a Klick, manage rotating savings (Esusu/Ajo), one-off contributions, or joint investments – all in one secure place.
           </Typography>

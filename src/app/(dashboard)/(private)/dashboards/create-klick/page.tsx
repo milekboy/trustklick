@@ -310,7 +310,7 @@ export default function CreateKlick() {
                     />
                   </Grid>
 
-                  {/* Total Shares and Share Value */}
+
 
 
                   {/* Type */}
