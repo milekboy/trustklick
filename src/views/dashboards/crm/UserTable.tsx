@@ -144,7 +144,7 @@ export default function KlickList() {
       ) : (
         <Grid container spacing={3}>
           {filteredKlicks.map(klick => (
-            <Grid size={{ xs: 12, md: 6 }} key={klick.id}>
+            <Grid size={{ xs: 12, md: 4 }} key={klick.id}>
               <KlickCard klick={klick} illustration={getIllustration(klick.id)} />
             </Grid>
           ))}

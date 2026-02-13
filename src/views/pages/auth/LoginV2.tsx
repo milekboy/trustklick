@@ -34,12 +34,12 @@ const LoginV2 = ({ mode }: { mode: Mode }) => {
   // States
 
   // Vars
-  const darkImg = '/images/pages/auth-v2-mask-1-dark.png'
-  const lightImg = '/images/pages/auth-v2-mask-1-light.png'
-  const darkIllustration = '/images/pages/login.png'
-  const lightIllustration = '/images/pages/login.png'
-  const borderedDarkIllustration = '/images/pages/login.png'
-  const borderedLightIllustration = '/images/pages/login.png'
+  const darkImg = '/images/pages/auth-v2-mask-3-dark.png'
+  const lightImg = '/images/pages/auth-v2-mask-3-light.png'
+  const darkIllustration = '/images/illustrations/auth/v2-reset-password-dark.png'
+  const lightIllustration = '/images/illustrations/auth/v2-reset-password-light.png'
+  const borderedDarkIllustration = '/images/illustrations/auth/v2-reset-password-dark-border.png'
+  const borderedLightIllustration = '/images/illustrations/auth/v2-reset-password-light-border.png'
 
   // Hooks
   const { lang: locale } = useParams()
@@ -97,21 +97,18 @@ const LoginV2 = ({ mode }: { mode: Mode }) => {
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       <div
         className={classnames(
-          'flex bs-full items-center justify-center flex-1 min-bs-[100dvh] relative p-6 max-md:hidden',
+          'flex items-center justify-center bs-full flex-1 min-bs-[100dvh] relative p-6 max-md:hidden',
           {
             'border-ie': settings.skin === 'bordered'
           }
         )}
       >
         <div className='pli-6 max-lg:mbs-40 lg:mbe-24'>
-          <div className='relative rounded-xl overflow-hidden'>
-            <img
-              src={characterIllustration}
-              alt='character-illustration'
-              className='max-bs-[673px] max-is-full bs-auto relative -z-[1]'
-            />
-            <div className='absolute inset-0 bg-black/30 pointer-events-none' />
-          </div>
+          <img
+            src={characterIllustration}
+            alt='character-illustration'
+            className='max-bs-[677px] max-is-full bs-auto'
+          />
         </div>
         <img src={authBackground} className='absolute bottom-[4%] z-[-1] is-full max-md:hidden' />
       </div>

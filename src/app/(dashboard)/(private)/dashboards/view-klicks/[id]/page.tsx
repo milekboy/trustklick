@@ -202,6 +202,7 @@ export default function SingleKlickPage() {
   const [announcementText, setAnnouncementText] = useState('')
   const [isUpdatingAnnouncement, setIsUpdatingAnnouncement] = useState(false)
   const [isInviting, setIsInviting] = useState(false)
+  const [inviteMemberOpen, setInviteMemberOpen] = useState(false)
 
   // Edit Klick State
   const [editKlickOpen, setEditKlickOpen] = useState(false)
@@ -1060,15 +1061,12 @@ export default function SingleKlickPage() {
                     icon={<i className='ri-group-line' />}
                     iconPosition='start'
                   />
-                  {/* Cycles Tab Removed */}
-                  {isAdmin && (
-                    <Tab
-                      value='invite'
-                      label='Invite new member'
-                      icon={<i className='ri-mail-send-line' />}
-                      iconPosition='start'
-                    />
-                  )}
+                  <Tab
+                    value='cycles'
+                    label='Cycles'
+                    icon={<i className='ri-refresh-line' />}
+                    iconPosition='start'
+                  />
                 </CustomTabList>
               </div>
 
@@ -1308,7 +1306,16 @@ export default function SingleKlickPage() {
                     <Typography variant='h6' className='font-semibold'>
                       Members ({members.length})
                     </Typography>
-
+                    {isAdmin && (
+                      <Button
+                        variant='contained'
+                        size='small'
+                        startIcon={<i className='ri-add-line' />}
+                        onClick={() => setInviteMemberOpen(true)}
+                      >
+                        Invite Member
+                      </Button>
+                    )}
                   </div>
 
                   {members.length === 0 ? (
@@ -1621,173 +1628,7 @@ export default function SingleKlickPage() {
                 {/* Settings Tab */}
                 {/* Invite Tab */}
                 {/* Invite Tab */}
-                <TabPanel value='invite' className='space-y-4'>
-                  <Typography variant='h6' className='font-semibold mb-4'>
-                    Invite New Member
-                  </Typography>
-                  <Card variant='outlined' className='p-6'>
-                    <Grid container spacing={2}>
-                      <Grid size={{ xs: 12 }}>
-                        <Typography variant='body1' className='mb-2'>
-                          Invite via Email or Phone Number (at least one is required)
-                        </Typography>
-                      </Grid>
 
-                      {/* Email Input */}
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <TextField
-                          fullWidth
-                          type='email'
-                          label='Email Address'
-                          placeholder='Enter email address'
-                          value={inviteEmail}
-                          onChange={e => setInviteEmail(e.target.value)}
-                          size='small'
-                        />
-                      </Grid>
-
-                      {/* Phone Input */}
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <div className='flex gap-2 items-start'>
-                          <FormControl size='small' sx={{ minWidth: 100 }}>
-                            <InputLabel>Country</InputLabel>
-                            {loadingCountries ? (
-                              <div className='flex items-center justify-center p-2'>
-                                <CircularProgress size={20} />
-                              </div>
-                            ) : (
-                              <Select
-                                value={countryCode}
-                                label='Country'
-                                onChange={e => {
-                                  setCountryCode(e.target.value)
-                                  const country = countries.find(c => c.code === e.target.value)
-                                  if (country) setSelectedCountry(country)
-                                }}
-                                renderValue={selected => (
-                                  <div className='flex items-center gap-2'>
-                                    {selectedCountry && (
-                                      <img
-                                        src={selectedCountry.flagUrl}
-                                        alt={selectedCountry.name}
-                                        width='20'
-                                        height='15'
-                                        style={{ objectFit: 'cover' }}
-                                      />
-                                    )}
-                                    <span className='pe-5'>{selected}</span>
-                                  </div>
-                                )}
-                                MenuProps={{
-                                  PaperProps: {
-                                    style: {
-                                      maxHeight: 300,
-                                      width: 250
-                                    }
-                                  }
-                                }}
-                              >
-                                {countries.map(country => (
-                                  <MenuItem key={`${country.cca2}-${country.code}`} value={country.code}>
-                                    <div className='flex items-center gap-2'>
-                                      <img
-                                        src={country.flagUrl}
-                                        alt={country.name}
-                                        width='20'
-                                        height='15'
-                                        style={{ objectFit: 'cover' }}
-                                      />
-                                      <span className='truncate'>{country.name}</span>
-                                      <span className='text-gray-500'>({country.code})</span>
-                                    </div>
-                                  </MenuItem>
-                                ))}
-                              </Select>
-                            )}
-                          </FormControl>
-                          <TextField
-                            fullWidth
-                            size='small'
-                            type='tel'
-                            label='Phone Number'
-                            placeholder='8012345678'
-                            value={invitePhone}
-                            onChange={e => setInvitePhone(e.target.value)}
-                          />
-                        </div>
-                      </Grid>
-
-                      <Grid size={{ xs: 12 }}>
-                        <Button
-                          variant='contained'
-                          onClick={handleInviteMember}
-                          startIcon={<i className='ri-send-plane-fill' />}
-                          disabled={(!inviteEmail && !invitePhone) || isInviting}
-                          sx={{ minWidth: 120 }}
-                        >
-                          {isInviting ? <CircularProgress size={24} color="inherit" /> : 'Send Invite'}
-                        </Button>
-                      </Grid>
-                    </Grid>
-
-                  </Card>
-
-                  {/* Pending Invites List */}
-                  <div className='mt-8'>
-                    <Typography variant='h6' className='font-semibold mb-4'>
-                      Pending Invites ({joinRequests.length})
-                    </Typography>
-                    {joinRequests.length === 0 ? (
-                      <Card variant='outlined' className='p-6 text-center'>
-                        <Typography variant='body2' color='text.secondary'>
-                          No pending invites.
-                        </Typography>
-                      </Card>
-                    ) : (
-                      <Card variant='outlined'>
-                        <List className='p-0'>
-                          {joinRequests.map((request, index) => (
-                            <div key={request.id}>
-                              <ListItem className='py-3'>
-                                <ListItemAvatar>
-                                  <CustomAvatar skin='light' color='info' size={42}>
-                                    {getInitials(`${request.user.first_name} ${request.user.last_name}`)}
-                                  </CustomAvatar>
-                                </ListItemAvatar>
-                                <ListItemText
-                                  primary={
-                                    <div className='flex items-center gap-2'>
-                                      <Typography className='font-medium'>
-                                        {request.user.first_name} {request.user.last_name}
-                                      </Typography>
-                                      <Chip label='Pending' size='small' color='warning' variant='tonal' />
-                                    </div>
-                                  }
-                                  secondary={request.user.email}
-                                />
-                                {isAdmin && (
-                                  <ListItemSecondaryAction>
-                                    <div className='flex items-center gap-2'>
-                                      <IconButton
-                                        size='small'
-                                        color='error'
-                                        onClick={() => handleDeclineRequest(request.id)}
-                                        title='Revoke Invite'
-                                      >
-                                        <i className='ri-close-line' />
-                                      </IconButton>
-                                    </div>
-                                  </ListItemSecondaryAction>
-                                )}
-                              </ListItem>
-                              {index < joinRequests.length - 1 && <Divider />}
-                            </div>
-                          ))}
-                        </List>
-                      </Card>
-                    )}
-                  </div>
-                </TabPanel>
               </CardContent >
             </TabContext>
           </Card>
@@ -1797,12 +1638,19 @@ export default function SingleKlickPage() {
         <Grid size={{ xs: 12, md: 4 }}>
           <Card className='h-full'>
             <CardHeader
-              title='Cycles'
+              title='Active Cycles'
               action={
                 isAdmin && (
-                  <IconButton size='small' onClick={() => setProductTypeSelectionOpen(true)} title='Create New Cycle'>
-                    <i className='ri-add-line' />
-                  </IconButton>
+                  <Button
+                    variant='contained'
+                    size='small'
+                    color='primary'
+                    startIcon={<i className='ri-add-line' />}
+                    onClick={() => setProductTypeSelectionOpen(true)}
+                    className='shadow-md font-bold'
+                  >
+                    Add Cycle
+                  </Button>
                 )
               }
             />
@@ -2224,7 +2072,7 @@ export default function SingleKlickPage() {
                                     handleSelectMember(member)
                                     setMemberSearch('')
                                   }}
-                                  disabled={isMemberSelected(member.user.id)}
+                                  disabled={false}
                                 >
                                   <ListItemAvatar>
                                     <CustomAvatar
@@ -2331,8 +2179,7 @@ export default function SingleKlickPage() {
                                           key={member.id}
                                           value={member.id}
                                           disabled={
-                                            isMemberSelected(member.user.id) &&
-                                            member.user.id !== allocation.member?.user.id
+                                            false
                                           }
                                         >
                                           {member.user.first_name} {member.user.last_name} {member.status !== 'approved' ? '(Pending)' : ''}
@@ -2575,6 +2422,190 @@ export default function SingleKlickPage() {
             {isUpdatingAnnouncement ? <CircularProgress size={24} color="inherit" /> : 'Save'}
           </Button>
         </DialogActions>
+      </Dialog>
+
+      {/* Invite Member Dialog */}
+      <Dialog
+        open={inviteMemberOpen}
+        onClose={() => setInviteMemberOpen(false)}
+        fullWidth
+        maxWidth='md'
+      >
+        <DialogTitle>
+          <div className='flex items-center justify-between'>
+            <Typography variant='h6' className='font-semibold'>
+              Invite New Member
+            </Typography>
+            <IconButton onClick={() => setInviteMemberOpen(false)} size='small'>
+              <i className='ri-close-line' />
+            </IconButton>
+          </div>
+        </DialogTitle>
+        <DialogContent dividers>
+          <div className='space-y-6'>
+            <Card variant='outlined' className='p-6'>
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12 }}>
+                  <Typography variant='body1' className='mb-2'>
+                    Invite via Email or Phone Number (at least one is required)
+                  </Typography>
+                </Grid>
+
+                {/* Email Input */}
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    fullWidth
+                    type='email'
+                    label='Email Address'
+                    placeholder='Enter email address'
+                    value={inviteEmail}
+                    onChange={e => setInviteEmail(e.target.value)}
+                    size='small'
+                  />
+                </Grid>
+
+                {/* Phone Input */}
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <div className='flex gap-2 items-start'>
+                    <FormControl size='small' sx={{ minWidth: 100 }}>
+                      <InputLabel>Country</InputLabel>
+                      {loadingCountries ? (
+                        <div className='flex items-center justify-center p-2'>
+                          <CircularProgress size={20} />
+                        </div>
+                      ) : (
+                        <Select
+                          value={countryCode}
+                          label='Country'
+                          onChange={e => {
+                            setCountryCode(e.target.value)
+                            const country = countries.find(c => c.code === e.target.value)
+                            if (country) setSelectedCountry(country)
+                          }}
+                          renderValue={selected => (
+                            <div className='flex items-center gap-2'>
+                              {selectedCountry && (
+                                <img
+                                  src={selectedCountry.flagUrl}
+                                  alt={selectedCountry.name}
+                                  width='20'
+                                  height='15'
+                                  style={{ objectFit: 'cover' }}
+                                />
+                              )}
+                              <span className='pe-5'>{selected}</span>
+                            </div>
+                          )}
+                          MenuProps={{
+                            PaperProps: {
+                              style: {
+                                maxHeight: 300,
+                                width: 250
+                              }
+                            }
+                          }}
+                        >
+                          {countries.map(country => (
+                            <MenuItem key={`${country.cca2}-${country.code}`} value={country.code}>
+                              <div className='flex items-center gap-2'>
+                                <img
+                                  src={country.flagUrl}
+                                  alt={country.name}
+                                  width='20'
+                                  height='15'
+                                  style={{ objectFit: 'cover' }}
+                                />
+                                <span className='truncate'>{country.name}</span>
+                                <span className='text-gray-500'>({country.code})</span>
+                              </div>
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      )}
+                    </FormControl>
+                    <TextField
+                      fullWidth
+                      size='small'
+                      type='tel'
+                      label='Phone Number'
+                      placeholder='8012345678'
+                      value={invitePhone}
+                      onChange={e => setInvitePhone(e.target.value)}
+                    />
+                  </div>
+                </Grid>
+
+                <Grid size={{ xs: 12 }}>
+                  <Button
+                    variant='contained'
+                    onClick={handleInviteMember}
+                    startIcon={<i className='ri-send-plane-fill' />}
+                    disabled={(!inviteEmail && !invitePhone) || isInviting}
+                    sx={{ minWidth: 120 }}
+                  >
+                    {isInviting ? <CircularProgress size={24} color="inherit" /> : 'Send Invite'}
+                  </Button>
+                </Grid>
+              </Grid>
+            </Card>
+
+            {/* Pending Invites List */}
+            <div>
+              <Typography variant='h6' className='font-semibold mb-4'>
+                Pending Invites ({joinRequests.length})
+              </Typography>
+              {joinRequests.length === 0 ? (
+                <Card variant='outlined' className='p-6 text-center'>
+                  <Typography variant='body2' color='text.secondary'>
+                    No pending invites.
+                  </Typography>
+                </Card>
+              ) : (
+                <Card variant='outlined'>
+                  <List className='p-0'>
+                    {joinRequests.map((request, index) => (
+                      <div key={request.id}>
+                        <ListItem className='py-3'>
+                          <ListItemAvatar>
+                            <CustomAvatar skin='light' color='info' size={42}>
+                              {getInitials(`${request.user.first_name} ${request.user.last_name}`)}
+                            </CustomAvatar>
+                          </ListItemAvatar>
+                          <ListItemText
+                            primary={
+                              <div className='flex items-center gap-2'>
+                                <Typography className='font-medium'>
+                                  {request.user.first_name} {request.user.last_name}
+                                </Typography>
+                                <Chip label='Pending' size='small' color='warning' variant='tonal' />
+                              </div>
+                            }
+                            secondary={request.user.email}
+                          />
+                          {isAdmin && (
+                            <ListItemSecondaryAction>
+                              <div className='flex items-center gap-2'>
+                                <IconButton
+                                  size='small'
+                                  color='error'
+                                  onClick={() => handleDeclineRequest(request.id)}
+                                  title='Revoke Invite'
+                                >
+                                  <i className='ri-close-line' />
+                                </IconButton>
+                              </div>
+                            </ListItemSecondaryAction>
+                          )}
+                        </ListItem>
+                        {index < joinRequests.length - 1 && <Divider />}
+                      </div>
+                    ))}
+                  </List>
+                </Card>
+              )}
+            </div>
+          </div>
+        </DialogContent>
       </Dialog>
     </div >
 

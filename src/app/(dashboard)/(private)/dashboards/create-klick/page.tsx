@@ -203,10 +203,7 @@ export default function CreateKlick() {
                 <Grid container spacing={4}>
                   {/* Klick Name */}
                   <Grid size={{ xs: 12 }}>
-                    <Typography variant='body2' className='font-semibold mb-2 flex items-center gap-2'>
-                      <i className='ri-group-line text-lg text-primary' />
-                      Klick Name
-                    </Typography>
+
                     <TextField
                       fullWidth
                       name='name'
@@ -229,10 +226,7 @@ export default function CreateKlick() {
 
                   {/* Description */}
                   <Grid size={{ xs: 12 }}>
-                    <Typography variant='body2' className='font-semibold mb-2 flex items-center gap-2'>
-                      <i className='ri-file-text-line text-lg text-primary' />
-                      Description
-                    </Typography>
+
                     <TextField
                       fullWidth
                       multiline
@@ -257,10 +251,7 @@ export default function CreateKlick() {
 
                   {/* WhatsApp Group Link */}
                   <Grid size={{ xs: 12 }}>
-                    <Typography variant='body2' className='font-semibold mb-2 flex items-center gap-2'>
-                      <i className='ri-whatsapp-line text-lg text-success' />
-                      WhatsApp Group Link
-                    </Typography>
+
                     <TextField
                       fullWidth
                       type='url'
@@ -284,10 +275,7 @@ export default function CreateKlick() {
 
                   {/* Announcement */}
                   <Grid size={{ xs: 12 }}>
-                    <Typography variant='body2' className='font-semibold mb-2 flex items-center gap-2'>
-                      <i className='ri-megaphone-line text-lg text-warning' />
-                      Announcement
-                    </Typography>
+
                     <TextField
                       fullWidth
                       multiline
@@ -315,10 +303,7 @@ export default function CreateKlick() {
 
                   {/* Type */}
                   <Grid size={{ xs: 12 }}>
-                    <Typography variant='body2' className='font-semibold mb-2 flex items-center gap-2'>
-                      <i className='ri-lock-line text-lg text-secondary' />
-                      Klick Type
-                    </Typography>
+
                     <TextField
                       fullWidth
                       select
