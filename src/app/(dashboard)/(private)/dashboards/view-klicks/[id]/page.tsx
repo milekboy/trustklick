@@ -470,7 +470,9 @@ export default function SingleKlickPage() {
         setToast({ message: 'Cycle name is required', type: 'error' })
         return
       }
-      if (participants.length === 0) {
+
+      // Participants validation only for non-contribution cycles
+      if (cycleForm.product_type !== 'contribution' && participants.length === 0) {
         setToast({ message: 'Please add at least one participant', type: 'error' })
         return
       }
@@ -481,12 +483,12 @@ export default function SingleKlickPage() {
         currency: cycleForm.currency,
         min_amount: parseFloat(cycleForm.min_amount) || 0,
         saving_amount: parseFloat(cycleForm.saving_amount) || 0,
-        total_slot: parseInt(cycleForm.total_slot),
+        total_slot: cycleForm.product_type === 'contribution' ? 0 : parseInt(cycleForm.total_slot),
         product_type: cycleForm.product_type,
         payment_type: cycleForm.payment_type,
         expected_start_date: cycleForm.expected_start_date,
         preffered_payment_period: cycleForm.preffered_payment_period,
-        invite_ref: cycleForm.invite_ref,
+        invite_ref: '', // Removed invite_ref
         announcement: cycleForm.announcement,
         disbursement_structure: cycleForm.disbursement_structure,
         participants
@@ -1908,17 +1910,20 @@ export default function SingleKlickPage() {
                     </FormControl>
                   </Grid>
                 )}
-                <Grid size={{ xs: 12, sm: selectedProductType === 'contribution' ? 12 : 6 }}>
-                  <TextField
-                    fullWidth
-                    type='number'
-                    label='Total Slots'
-                    placeholder='Enter number of slots'
-                    value={cycleForm.total_slot}
-                    onChange={e => setCycleForm({ ...cycleForm, total_slot: e.target.value })}
-                    inputProps={{ min: 1 }}
-                  />
-                </Grid>
+                {/* Total Slots - Hidden for Contribution */}
+                {selectedProductType !== 'contribution' && (
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      fullWidth
+                      type='number'
+                      label='Total Slots'
+                      placeholder='Enter number of slots'
+                      value={cycleForm.total_slot}
+                      onChange={e => setCycleForm({ ...cycleForm, total_slot: e.target.value })}
+                      inputProps={{ min: 1 }}
+                    />
+                  </Grid>
+                )}
               </Grid>
             </div>
 
@@ -2308,15 +2313,7 @@ export default function SingleKlickPage() {
                     onChange={e => setCycleForm({ ...cycleForm, preffered_payment_period: e.target.value })}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    fullWidth
-                    label='Invite Reference'
-                    placeholder='e.g., abc123'
-                    value={cycleForm.invite_ref}
-                    onChange={e => setCycleForm({ ...cycleForm, invite_ref: e.target.value })}
-                  />
-                </Grid>
+                {/* Invite Reference Removed */}
                 {/* Disbursement Structure - Hidden for Contribution */}
                 {selectedProductType !== 'contribution' && (
                   <Grid size={{ xs: 12, sm: 6 }}>

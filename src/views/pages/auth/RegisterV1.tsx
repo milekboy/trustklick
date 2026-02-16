@@ -104,7 +104,9 @@ const RegisterV1 = ({ mode }: { mode: Mode }) => {
       const { data } = await api.post('/register', {
         first_name: firstName,
         last_name: lastName,
-        phone: `${countryCode}${phone}`, // Prepend country code to phone number
+        phone,
+        country_code: countryCode.replace('+', ''),
+        country: selectedCountry?.cca2 || 'NG',
         email,
         password,
         password_confirmation: confirm

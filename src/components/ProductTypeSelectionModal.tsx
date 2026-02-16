@@ -1,6 +1,7 @@
 'use client'
 
-import { Dialog, DialogContent, DialogTitle, Card, Typography, Button } from '@mui/material'
+import { Dialog, DialogContent, DialogTitle, Card, Typography, Button, IconButton } from '@mui/material'
+
 import { motion } from 'framer-motion'
 
 interface ProductTypeSelectionModalProps {
@@ -17,7 +18,8 @@ const productTypes = [
         description: 'A rotatory savings where each member shares in different collection period saving the same amount over a period of time. This is the regular Esusu, Ajo.',
         color: 'from-blue-500 to-blue-600',
         bgColor: 'bg-blue-50',
-        iconColor: 'text-blue-600'
+        iconColor: 'text-blue-600',
+        borderColor: 'border-blue-500'
     },
     {
         type: 'contribution' as const,
@@ -26,7 +28,8 @@ const productTypes = [
         description: 'Usually for like a one off contribution for maybe a members wedding, to support a lost loved one. This is usually non profit.',
         color: 'from-green-500 to-green-600',
         bgColor: 'bg-green-50',
-        iconColor: 'text-green-600'
+        iconColor: 'text-green-600',
+        borderColor: 'border-green-500'
     },
     {
         type: 'investment' as const,
@@ -35,7 +38,8 @@ const productTypes = [
         description: 'This is when members come together to contribute towards a joint business venture. This percentage ownership can be alloted if turned on the klick and cycle dividends can also be shared.',
         color: 'from-purple-500 to-purple-600',
         bgColor: 'bg-purple-50',
-        iconColor: 'text-purple-600'
+        iconColor: 'text-purple-600',
+        borderColor: 'border-purple-500'
     }
 ]
 
@@ -63,7 +67,19 @@ export default function ProductTypeSelectionModal({
             }}
         >
             <DialogTitle>
-                <div className='text-center pb-2'>
+                <div className='relative text-center pb-2'>
+                    <IconButton
+                        aria-label='close'
+                        onClick={onClose}
+                        sx={{
+                            position: 'absolute',
+                            right: -8,
+                            top: -8,
+                            color: (theme) => theme.palette.grey[500],
+                        }}
+                    >
+                        <i className='ri-close-line' style={{ fontSize: '1.5rem' }} />
+                    </IconButton>
                     <Typography variant='h4' className='font-bold mb-2'>
                         Choose Cycle Type
                     </Typography>
@@ -72,7 +88,7 @@ export default function ProductTypeSelectionModal({
                     </Typography>
                 </div>
             </DialogTitle>
-            <DialogContent className='pb-8 pt-4'>
+            <DialogContent className='pb-8 pt-4 px-8 md:px-12'>
                 <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
                     {productTypes.map((product, index) => (
                         <motion.div
@@ -82,29 +98,24 @@ export default function ProductTypeSelectionModal({
                             transition={{ delay: index * 0.1 }}
                         >
                             <Card
-                                className={`p-6 h-full flex flex-col hover:shadow-2xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-current ${product.bgColor}`}
+                                className={`p-4 h-full flex flex-col hover:shadow-2xl transition-all duration-300 cursor-pointer border-2 ${product.borderColor} ${product.bgColor}`}
                                 sx={{
                                     position: 'relative',
-                                    overflow: 'hidden',
+                                    overflow: 'visible',
                                     '&:hover': {
                                         transform: 'translateY(-8px)'
                                     }
                                 }}
                             >
-                                {/* Decorative gradient overlay */}
-                                <div
-                                    className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${product.color}`}
-                                />
-
                                 {/* Icon */}
                                 <div className='flex justify-center mb-4'>
-                                    <div className={`w-16 h-16 rounded-full ${product.bgColor} flex items-center justify-center`}>
-                                        <i className={`${product.icon} text-4xl ${product.iconColor}`} />
+                                    <div className={`w-14 h-14 rounded-full ${product.bgColor} border-2 ${product.borderColor} flex items-center justify-center`}>
+                                        <i className={`${product.icon} text-3xl ${product.iconColor}`} />
                                     </div>
                                 </div>
 
                                 {/* Title */}
-                                <Typography variant='h5' className='font-bold text-center mb-3'>
+                                <Typography variant='h5' className='font-bold text-center mb-2'>
                                     {product.title}
                                 </Typography>
 
@@ -112,7 +123,7 @@ export default function ProductTypeSelectionModal({
                                 <Typography
                                     variant='body2'
                                     color='text.secondary'
-                                    className='text-center mb-6 flex-1 leading-relaxed'
+                                    className='text-center mb-4 flex-1 leading-relaxed text-sm'
                                 >
                                     {product.description}
                                 </Typography>
@@ -122,10 +133,10 @@ export default function ProductTypeSelectionModal({
                                     variant='contained'
                                     fullWidth
                                     onClick={() => handleSelect(product.type)}
-                                    className={`bg-gradient-to-r ${product.color} text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all`}
+                                    className={`bg-gradient-to-r ${product.color} text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg transition-all`}
                                     sx={{
                                         textTransform: 'none',
-                                        fontSize: '1rem',
+                                        fontSize: '0.9rem',
                                         background: `linear-gradient(135deg, ${product.color.includes('blue') ? '#3b82f6, #2563eb' : product.color.includes('green') ? '#10b981, #059669' : '#a855f7, #9333ea'})`
                                     }}
                                 >
