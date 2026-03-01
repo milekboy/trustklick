@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import type { SyntheticEvent } from 'react'
+import { format } from 'date-fns'
 import NetworkInstance from '@/components/NetworkInstance'
 import { useAuth } from '@/components/AuthContext'
 import Toast from '@/components/Toast'
@@ -1215,7 +1216,7 @@ export default function SingleKlickPage() {
                                       Start Date:
                                     </Typography>
                                     <Typography variant='body2'>
-                                      {new Date(cycle.expected_start_date).toLocaleDateString()}
+                                      {format(new Date(cycle.expected_start_date), 'dd MMMM yyyy')}
                                     </Typography>
                                   </div>
                                 )}
@@ -1595,7 +1596,7 @@ export default function SingleKlickPage() {
                                     Start Date:
                                   </Typography>
                                   <Typography variant='body2'>
-                                    {new Date(cycle.expected_start_date).toLocaleDateString()}
+                                    {format(new Date(cycle.expected_start_date), 'dd MMMM yyyy')}
                                   </Typography>
                                 </div>
                               )}

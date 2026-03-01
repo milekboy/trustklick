@@ -1,0 +1,54 @@
+﻿diff --git a/src/app/(dashboard)/(private)/dashboards/view-klicks/[id]/cycles/[cycleId]/page.tsx b/src/app/(dashboard)/(private)/dashboards/view-klicks/[id]/cycles/[cycleId]/page.tsx
+index e36fc96..e622d6f 100644
+--- a/src/app/(dashboard)/(private)/dashboards/view-klicks/[id]/cycles/[cycleId]/page.tsx
++++ b/src/app/(dashboard)/(private)/dashboards/view-klicks/[id]/cycles/[cycleId]/page.tsx
+@@ -3,6 +3,7 @@
+ import { useEffect, useState } from 'react'
+ import { useParams, useRouter } from 'next/navigation'
+ import type { SyntheticEvent } from 'react'
++import { format } from 'date-fns'
+ 
+ // Components
+ import NetworkInstance from '@/components/NetworkInstance'
+@@ -1054,7 +1055,7 @@ export default function ViewCyclePage() {
+                                     <Card variant="outlined" className='mb-6 bg-primary-50 border-primary'>
+                                         <CardHeader
+                                             title="Current Active Schedule"
+-                                            subheader={`Slot ${activeSchedule.slot} ΓÇó ${new Date(activeSchedule.period_start).toLocaleDateString()} - ${new Date(activeSchedule.period_end).toLocaleDateString()}`}
++                                            subheader={`Slot ${activeSchedule.slot} ΓÇó ${format(new Date(activeSchedule.period_start), 'dd MMMM yyyy')} - ${format(new Date(activeSchedule.period_end), 'dd MMMM yyyy')}`}
+                                             avatar={<i className="ri-timer-flash-line text-2xl text-primary" />}
+                                         />
+                                         <CardContent>
+@@ -1296,9 +1297,9 @@ export default function ViewCyclePage() {
+                                                             Slot {schedule.slot}
+                                                         </Typography>
+                                                         <div className="flex-1 flex flex-wrap gap-2 text-sm text-gray-600">
+-                                                            <span>{new Date(schedule.period_start).toLocaleDateString()}</span>
++                                                            <span>{format(new Date(schedule.period_start), 'dd MMMM yyyy')}</span>
+                                                             <span>-</span>
+-                                                            <span>{new Date(schedule.period_end).toLocaleDateString()}</span>
++                                                            <span>{format(new Date(schedule.period_end), 'dd MMMM yyyy')}</span>
+                                                         </div>
+                                                         {recipients.length > 0 && (
+                                                             <Chip
+@@ -1338,7 +1339,7 @@ export default function ViewCyclePage() {
+                                                             </Grid>
+                                                             <Grid size={{ xs: 6, sm: 3 }}>
+                                                                 <Typography variant="caption" color="text.secondary">Created At</Typography>
+-                                                                <Typography variant="body2">{new Date(schedule.created_at).toLocaleDateString()}</Typography>
++                                                                <Typography variant="body2">{format(new Date(schedule.created_at), 'dd MMMM yyyy')}</Typography>
+                                                             </Grid>
+ 
+                                                             {/* Recipients Section */}
+diff --git a/src/app/(dashboard)/(private)/dashboards/view-klicks/[id]/page.tsx b/src/app/(dashboard)/(private)/dashboards/view-klicks/[id]/page.tsx
+index 9ce8eda..75e02d5 100644
+--- a/src/app/(dashboard)/(private)/dashboards/view-klicks/[id]/page.tsx
++++ b/src/app/(dashboard)/(private)/dashboards/view-klicks/[id]/page.tsx
+@@ -3,6 +3,7 @@
+ import { useEffect, useState } from 'react'
+ import { useParams, useRouter } from 'next/navigation'
+ import type { SyntheticEvent } from 'react'
++import { format } from 'date-fns'
+ import NetworkInstance from '@/components/NetworkInstance'
+ import { useAuth } from '@/components/AuthContext'
+ import Toast from '@/components/Toast'
